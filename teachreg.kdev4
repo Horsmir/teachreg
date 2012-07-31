@@ -1,0 +1,4 @@
+[Project]
+Name=teachreg
+Manager=KDevCMakeManager
+VersionControl=kdevgit
