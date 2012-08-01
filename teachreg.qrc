@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="/">
+    <file>images/practics.png</file>
+    <file>images/lectures.png</file>
+    <file>images/home.png</file>
+    <file>images/disciplins.png</file>
+    <file>images/groups.png</file>
+  </qresource>
+</RCC>

@@ -5,7 +5,7 @@
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
-    teachreg foo;
+    TeachReg foo;
     foo.show();
     return app.exec();
 }

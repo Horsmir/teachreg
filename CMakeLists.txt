@@ -5,6 +5,12 @@ find_package(Qt4 REQUIRED)
 include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(teachreg_SRCS teachreg.cpp main.cpp)
+set(teachreg_UIS main_window.ui)
+set(teachreg_QRCS teachreg.qrc)
+
 qt4_automoc(${teachreg_SRCS})
-add_executable(teachreg ${teachreg_SRCS})
+QT4_WRAP_UI(UI_HEADERS ${teachreg_UIS})
+QT4_ADD_RESOURCES(QRC_SOURCES ${teachreg_QRCS})
+
+add_executable(teachreg ${teachreg_SRCS} ${UI_HEADERS} ${QRC_SOURCES})
 target_link_libraries(teachreg ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
