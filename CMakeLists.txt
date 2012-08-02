@@ -4,8 +4,8 @@ find_package(Qt4 REQUIRED)
 
 include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
-set(teachreg_SRCS teachreg.cpp main.cpp)
-set(teachreg_UIS main_window.ui)
+set(teachreg_SRCS subgroupsdialog.cpp studentlistdialog.cpp teachreg.cpp main.cpp)
+set(teachreg_UIS main_window.ui studentlistdlg.ui subgroupsdlg.ui)
 set(teachreg_QRCS teachreg.qrc)
 
 qt4_automoc(${teachreg_SRCS})

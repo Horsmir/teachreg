@@ -3,6 +3,7 @@
 
 #include <QtGui/QMainWindow>
 #include "ui_main_window.h"
+#include "studentlistdialog.h"
 
 namespace Ui
 {
@@ -18,9 +19,11 @@ public:
 	
 private slots:
 	void on_contentsWidget_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+	void on_studentListButton_clicked();
 	
 private:
 	Ui::MainWindow *ui;
+	StudentListDialog *dlgStudents;
 	
 	void createIcons();
 };

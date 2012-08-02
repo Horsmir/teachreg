@@ -5,6 +5,9 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	ui->setupUi(this);
 	
 	ui->contentsWidget->setCurrentRow(0);
+	ui->pagesWidget->setCurrentIndex(0);
+	
+	dlgStudents = new StudentListDialog(this);
 	
 	createIcons();
 }
@@ -48,6 +51,11 @@ void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QL
 		current = previous;
 	
 	ui->pagesWidget->setCurrentIndex(ui->contentsWidget->row(current));
+}
+
+void TeachReg::on_studentListButton_clicked()
+{
+	dlgStudents->show();
 }
 
 #include "teachreg.moc"
