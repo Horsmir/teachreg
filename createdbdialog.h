@@ -17,49 +17,35 @@
 */
 
 
-#ifndef SUBGROUPSDIALOG_H
-#define SUBGROUPSDIALOG_H
+#ifndef CREATEDBDIALOG_H
+#define CREATEDBDIALOG_H
 
 #include <QtGui/QDialog>
-#include <QtGui/QMessageBox>
-#include <QtGui/QCloseEvent>
-#include "ui_subgroupsdlg.h"
-#include "teachregmanager.h"
-
-const quint32 MAX_NUM_SUBGROUPS = 4;
+#include <QtGui/QFileDialog>
+#include <QtCore/QDir>
+#include "studentlistdialog.h"
+#include "ui_createdbdlg.h"
 
 namespace Ui
 {
-	class SubgroupsDlg;
+	class CreateDbDlg;
 }
 
-class SubgroupsDialog : public QDialog
+class CreateDbDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	explicit SubgroupsDialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
-	virtual ~SubgroupsDialog();
+	explicit CreateDbDialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
+	virtual ~CreateDbDialog();
 	
-	void setTeachregManager(TeachRegManager *manager);
-	void setGroupName(const QString &groupName);
-	
-protected:
-	void closeEvent(QCloseEvent *event);
+	QString getFilePath() const;
+	QString getAbout()const;
 	
 private slots:
-	void on_addSubgroupButton_clicked();
-	void on_okButton_clicked();
+	void on_newFileButton_clicked();
 	
 private:
-	Ui::SubgroupsDlg *ui;
-	TeachRegManager *manager;
-	QString groupName;
-	QListWidget *listSubgroups[MAX_NUM_SUBGROUPS];
-	QLabel *subgroupLabels[MAX_NUM_SUBGROUPS];
-	quint32 curNamSubgroup;
-	
-	void setSubgroups();
-	void clearAll();
+	Ui::CreateDbDlg *ui;
 };
 
-#endif // SUBGROUPSDIALOG_H
+#endif // CREATEDBDIALOG_H

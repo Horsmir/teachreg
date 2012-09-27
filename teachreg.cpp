@@ -7,14 +7,42 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	ui->contentsWidget->setCurrentRow(0);
 	ui->pagesWidget->setCurrentIndex(0);
 	
+	dbFileName = "";
+	dbDateDir = "";
+	
 	dlgStudents = new StudentListDialog(this);
+	dlgCreateDb = new CreateDbDialog(this);
+	dlgAddDate = new AddDateDialog(this);
+	
+	manager = new TeachRegManager(this);
+	
+	settings = new QSettings("../config/teahreg.conf", QSettings::NativeFormat, this);
+	readSettings();
+	
+	if(!dbFileName.isEmpty())
+	{
+		manager->loadDB(dbFileName);
+		ui->dbFilePathEdit->setText(dbFileName);
+		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
+		ui->label_14->setVisible(false);
+		setWindowTitle("TeachReg - " + dbFileName);
+	}
 	
 	createIcons();
+	
+	ocenkList = new QStringList;
+	ocenkList->append("");
+	ocenkList->append(trUtf8("нб"));
+	ocenkList->append("2");
+	ocenkList->append("3");
+	ocenkList->append("4");
+	ocenkList->append("5");
 }
 
 TeachReg::~TeachReg()
 {
 	delete ui;
+	delete ocenkList;
 }
 
 void TeachReg::createIcons()
@@ -51,11 +79,264 @@ void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QL
 		current = previous;
 	
 	ui->pagesWidget->setCurrentIndex(ui->contentsWidget->row(current));
+	
+	switch(ui->pagesWidget->currentIndex())
+	{
+		case 0:
+			break;
+		case 1:
+			showDisciplinList();
+			break;
+		case 2:
+			showGroupslinList();
+			break;
+		case 3:
+			ui->groupComboBox->clear();
+			ui->disciplinComboBox->clear();
+			ui->groupComboBox->addItems(manager->getGroupsNamesList());
+			ui->disciplinComboBox->addItems(manager->getDisciplinsList());
+			showLecturesTable();
+			break;
+		default:
+			break;
+	}
 }
 
 void TeachReg::on_studentListButton_clicked()
 {
+	dlgStudents->setGroupName(ui->viewGroupsWidget->currentItem()->text());
+	dlgStudents->setManager(manager);
 	dlgStudents->show();
+}
+
+void TeachReg::on_createDbButton_clicked()
+{
+	if(dlgCreateDb->exec() == QDialog::Accepted)
+	{
+		dbFileName = dlgCreateDb->getFilePath();
+		manager->createDB(dbFileName, dlgCreateDb->getAbout());
+		ui->dbFilePathEdit->setText(dbFileName);
+		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
+		ui->label_14->setVisible(false);
+		setWindowTitle("TeachReg - " + dbFileName);
+	}
+}
+
+void TeachReg::writeSettings()
+{
+	settings->setValue("general/CurrentDBFilePath", dbFileName);
+	settings->setValue("general/CurrentDBDateDir", dbDateDir);
+}
+
+void TeachReg::readSettings()
+{
+	dbFileName = settings->value("general/CurrentDBFilePath", QString()).toString();
+	dbDateDir = settings->value("general/CurrentDBDateDir", QDir::homePath()).toString();
+}
+
+void TeachReg::on_selectDbFilePathButton_clicked()
+{
+	QFileDialog::Options options;
+	options |= QFileDialog::DontUseNativeDialog;
+	
+	QString selectedFilter;
+	
+	QString fileName = QFileDialog::getOpenFileName(this, trUtf8("Файл базы данных"), dbDateDir, trUtf8("Файлы базы данных (*.trdb);;Все файлы (*.*)"), &selectedFilter, options);
+	if(!fileName.isEmpty())
+	{
+		dbFileName = fileName;
+		manager->loadDB(dbFileName);
+		ui->dbFilePathEdit->setText(dbFileName);
+		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
+		ui->label_14->setVisible(false);
+		setWindowTitle("TeachReg - " + dbFileName);
+	}
+}
+
+void TeachReg::showDisciplinList()
+{
+	ui->viewDisciplinsWidget->clear();
+	QStringList disciplins = manager->getDisciplinsList();
+	ui->viewDisciplinsWidget->addItems(disciplins);
+	ui->viewDisciplinsWidget->sortItems();
+	ui->viewDisciplinsWidget->setCurrentItem(0);
+}
+
+void TeachReg::on_addDisciplinButton_clicked()
+{
+	bool ok;
+	
+	QString text = QInputDialog::getText(this, trUtf8("Добавить дисциплину"), trUtf8("Название:"), QLineEdit::Normal, QString(), &ok);
+	if(ok && !text.isEmpty())
+	{
+		manager->addDisciplin(text);
+		showDisciplinList();
+	}
+}
+
+void TeachReg::on_editDisciplinButton_clicked()
+{
+	QString curDisciplin = ui->viewDisciplinsWidget->currentItem()->text();
+	bool ok;
+	
+	QString text = QInputDialog::getText(this, trUtf8("Изменить дисциплину"),
+												  trUtf8("Название:"), QLineEdit::Normal,
+												  curDisciplin, &ok);
+	if (ok && !text.isEmpty())
+	{
+		manager->editDisciplin(curDisciplin, text);
+		showDisciplinList();
+	}
+}
+
+void TeachReg::on_delDisciplinButton_clicked()
+{
+	QString curDisciplin = ui->viewDisciplinsWidget->currentItem()->text();
+	QMessageBox::StandardButton reply;
+	reply = QMessageBox::question(this, trUtf8("Удаление дисциплины"), QString(trUtf8("Удалить дисциплину \"") + curDisciplin + "\"?"), QMessageBox::Yes | QMessageBox::No);
+	if (reply == QMessageBox::Yes)
+	{
+		manager->delDisciplin(curDisciplin);
+		showDisciplinList();
+	}
+}
+
+void TeachReg::closeEvent(QCloseEvent *event)
+{
+	writeSettings();
+	QWidget::closeEvent(event);
+}
+
+void TeachReg::on_addGroupButton_clicked()
+{
+	bool ok;
+	
+	QString text = QInputDialog::getText(this, trUtf8("Добавить группу"), trUtf8("Название:"), QLineEdit::Normal, QString(), &ok);
+	if(ok && !text.isEmpty())
+	{
+		manager->addGroup(text);
+		showGroupslinList();
+	}
+}
+
+void TeachReg::showGroupslinList()
+{
+	ui->viewGroupsWidget->clear();
+	
+	QStringList groups = manager->getGroupsNamesList();
+	ui->viewGroupsWidget->addItems(groups);
+	ui->viewGroupsWidget->sortItems();
+	ui->viewGroupsWidget->setCurrentItem(0);
+}
+
+void TeachReg::showGroupData(const QString &groupName)
+{
+	QStringList groupData = manager->getGroupData(groupName);
+	ui->groupNameEdit->setText(groupData.at(1));
+	ui->labelNumStudents->setText(groupData.at(2));
+	ui->labelNumSubGroups->setText(groupData.at(3));
+}
+
+void TeachReg::on_viewGroupsWidget_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+	if(!current)
+		current = previous;
+	
+	QString curGroupName = current->text();
+	showGroupData(curGroupName);
+}
+
+void TeachReg::on_editGroupButton_clicked()
+{
+	if(!ui->viewGroupsWidget->currentItem())
+	{
+		QMessageBox::information(this, trUtf8("Группы"), trUtf8("Не выбрана группа.\nВыберите группу из списка и нажмите кнопку \"Изменить\"."), QMessageBox::Ok);
+		return;
+	}
+	ui->setEditGroupButton->setEnabled(true);
+}
+
+void TeachReg::on_setEditGroupButton_clicked()
+{
+	manager->editGroup(ui->viewGroupsWidget->currentItem()->text(), ui->groupNameEdit->text());
+	ui->setEditGroupButton->setDisabled(true);
+	showGroupslinList();
+}
+
+void TeachReg::on_delGroupButton_clicked()
+{
+	if(!ui->viewGroupsWidget->currentItem())
+	{
+		QMessageBox::information(this, trUtf8("Группы"), trUtf8("Не выбрана группа.\nВыберите группу из списка и нажмите кнопку \"Удалить\"."), QMessageBox::Ok);
+		return;
+	}
+	
+	QString curGroupName = ui->viewGroupsWidget->currentItem()->text();
+	QMessageBox::StandardButton reply;
+	reply = QMessageBox::question(this, trUtf8("Удаление группы"), QString(trUtf8("Удалить группу \"") + curGroupName + "\"?"), QMessageBox::Yes | QMessageBox::No);
+	if (reply == QMessageBox::Yes)
+	{
+		manager->delGroup(curGroupName);
+		showGroupslinList();
+	}
+}
+
+void TeachReg::showLecturesTable()
+{
+	ui->lectureViewWidget->clear();
+	QString curGroupName = ui->groupComboBox->currentText();
+	QString curDisciplin = ui->disciplinComboBox->currentText();
+	
+	QStringList dates;
+	dates << trUtf8("Ф.И. студента");
+	dates.append( manager->getLecturesDateList(curGroupName, curDisciplin));
+	if(dates.at(1).isEmpty())
+		dates.removeAt(1);
+	
+	QStringList students = manager->getStudentsList(curGroupName);
+	
+	int datesCount = dates.count();
+	int studentsCount = students.count();
+	
+	ui->lectureViewWidget->setColumnCount(datesCount);
+	ui->lectureViewWidget->setRowCount(studentsCount);
+	ui->lectureViewWidget->setHorizontalHeaderLabels(dates);
+	for(int i = 0; i < studentsCount; i++)
+		ui->lectureViewWidget->setItem(i, 0, new QTableWidgetItem(students.at(i)));
+	
+	for(int i = 0; i < studentsCount; i++)
+	{
+		QStringList results = manager->getLecturesResultList(curGroupName, curDisciplin, students.at(i));
+		if(results.at(0).isEmpty())
+			break;
+		for(int j = 0; j < results.count(); j++)
+		{
+			ui->lectureViewWidget->setItem(i, j + 1, new QTableWidgetItem(results.at(j)));
+		}
+		
+	}
+}
+
+void TeachReg::on_addLectureButton_clicked()
+{
+	if(dlgAddDate->exec() == QDialog::Accepted)
+	{
+		manager->addLecture(ui->groupComboBox->currentText(), ui->disciplinComboBox->currentText(), dlgAddDate->getDate());
+		showLecturesTable();
+	}
+}
+
+void TeachReg::on_lectureViewWidget_cellChanged(int row, int column)
+{
+	QString studentName = ui->lectureViewWidget->item(row, 0)->text();
+	QString date = ui->lectureViewWidget->horizontalHeaderItem(column)->text();
+	QString result = ui->lectureViewWidget->item(row, column)->text();
+	
+	int ocencId = ocenkList->indexOf(result);
+	if(ocencId == -1)
+		ocencId = 0;
+	
+	manager->addLectureResult(ui->groupComboBox->currentText(), ui->disciplinComboBox->currentText(), studentName, date, QString().setNum(ocencId));
 }
 
 #include "teachreg.moc"

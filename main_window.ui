@@ -79,7 +79,7 @@
     <item>
      <widget class="QStackedWidget" name="pagesWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="pageHome">
        <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -170,7 +170,7 @@
               <string>Создать новую базу данных</string>
              </property>
              <property name="text">
-              <string>Создать</string>
+              <string>Создать...</string>
              </property>
             </widget>
            </item>
@@ -213,6 +213,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="editDisciplinButton">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="toolTip">
              <string>Изменить дисциплину</string>
             </property>
@@ -228,6 +231,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="delDisciplinButton">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="toolTip">
              <string>Удалить дисциплину</string>
             </property>
@@ -302,6 +308,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="editGroupButton">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -323,6 +332,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="delGroupButton">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -458,6 +470,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="setEditGroupButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>

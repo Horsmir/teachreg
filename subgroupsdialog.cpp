@@ -23,14 +23,17 @@ SubgroupsDialog::SubgroupsDialog(QWidget *parent, Qt::WindowFlags f): QDialog(pa
 {
 	ui->setupUi(this);
 	
-	ui->label->setVisible(false);
-	ui->label_2->setVisible(false);
-	ui->label_3->setVisible(false);
-	ui->label_4->setVisible(false);
-	ui->subgroupsWidget1->setVisible(false);
-	ui->subgroupsWidget2->setVisible(false);
-	ui->subgroupsWidget3->setVisible(false);
-	ui->subgroupsWidget4->setVisible(false);
+	listSubgroups[0] = ui->subgroupsWidget1;
+	listSubgroups[1] = ui->subgroupsWidget2;
+	listSubgroups[2] = ui->subgroupsWidget3;
+	listSubgroups[3] = ui->subgroupsWidget4;
+	
+	subgroupLabels[0] = ui->label;
+	subgroupLabels[1] = ui->label_2;
+	subgroupLabels[2] = ui->label_3;
+	subgroupLabels[3] = ui->label_4;
+	
+	clearAll();
 }
 
 SubgroupsDialog::~SubgroupsDialog()
@@ -38,9 +41,74 @@ SubgroupsDialog::~SubgroupsDialog()
 	delete ui;
 }
 
-void SubgroupsDialog::on_subgroupWidget1_changed()
+void SubgroupsDialog::closeEvent(QCloseEvent *event)
 {
-	ui->subgroupsWidget1->sortItems();
+	clearAll();
+	QDialog::closeEvent(event);
+}
+
+void SubgroupsDialog::setGroupName(const QString &groupName)
+{
+	this->groupName = groupName;
+}
+
+void SubgroupsDialog::setTeachregManager(TeachRegManager *manager)
+{
+	this->manager = manager;
+	setSubgroups();
+}
+
+void SubgroupsDialog::setSubgroups()
+{
+	int numSubgroups = manager->getGroupData(groupName).at(3).toInt();
+	if(!numSubgroups)
+		ui->subgroupsWidget1->addItems(manager->getStudentsList(groupName));
+	else
+	{
+		for(int i = 0; i < numSubgroups; i++)
+		{
+			listSubgroups[i]->addItems(manager->getStudentsSubgroupList(groupName, i + 1));
+			listSubgroups[i]->setVisible(true);
+			subgroupLabels[i]->setVisible(true);
+		}
+		curNamSubgroup = numSubgroups;
+	}
+}
+
+void SubgroupsDialog::on_addSubgroupButton_clicked()
+{
+	if(curNamSubgroup >= MAX_NUM_SUBGROUPS)
+	{
+		QMessageBox::information(this, trUtf8("Подгруппы"), trUtf8("Установлено максимальное количество подгрупп."), QMessageBox::Ok);
+		return;
+	}
+	
+	listSubgroups[curNamSubgroup]->setVisible(true);
+	subgroupLabels[curNamSubgroup]->setVisible(true);
+	curNamSubgroup++;
+}
+
+void SubgroupsDialog::clearAll()
+{
+	listSubgroups[0]->clear();
+	curNamSubgroup = 1;
+	for(int i = 1; i < MAX_NUM_SUBGROUPS; i++)
+	{
+		listSubgroups[i]->clear();
+		listSubgroups[i]->setVisible(false);
+		subgroupLabels[i]->setVisible(false);
+	}
+}
+
+void SubgroupsDialog::on_okButton_clicked()
+{
+	manager->editGroupNumSubgroups(groupName, curNamSubgroup);
+	for(int i = 0; i < curNamSubgroup; i++)
+	{
+		for(int j = 0; j < listSubgroups[i]->count(); j++)
+			manager->changeSubgroup(i + 1, listSubgroups[i]->item(j)->text());
+	}
+	close();
 }
 
 #include "subgroupsdialog.moc"

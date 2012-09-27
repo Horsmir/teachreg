@@ -21,8 +21,11 @@
 #define STUDENTLISTDIALOG_H
 
 #include <QtGui/QDialog>
+#include <QtGui/QInputDialog>
+#include <QtGui/QMessageBox>
 #include "ui_studentlistdlg.h"
 #include "subgroupsdialog.h"
+#include "teachregmanager.h"
 
 namespace Ui
 {
@@ -36,12 +39,22 @@ public:
 	explicit StudentListDialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
 	virtual ~StudentListDialog();
 	
+	void setManager(TeachRegManager *tmanager);
+	void setGroupName(const QString &groupName);
+	
 public slots:
 	void on_subgroupsButton_clicked();
+	void on_addStudentButton_clicked();
+	void on_editStudentButton_clicked();
+	void on_delStudentButton_clicked();
 	
 private:
 	Ui::StudentListDlg *ui;
 	SubgroupsDialog *subgroupDlg;
+	TeachRegManager *manager;
+	QString groupName;
+	
+	void setStudentList();
 };
 
 #endif // STUDENTLISTDIALOG_H

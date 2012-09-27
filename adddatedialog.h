@@ -17,49 +17,28 @@
 */
 
 
-#ifndef SUBGROUPSDIALOG_H
-#define SUBGROUPSDIALOG_H
+#ifndef ADDDATEDIALOG_H
+#define ADDDATEDIALOG_H
 
 #include <QtGui/QDialog>
-#include <QtGui/QMessageBox>
-#include <QtGui/QCloseEvent>
-#include "ui_subgroupsdlg.h"
-#include "teachregmanager.h"
-
-const quint32 MAX_NUM_SUBGROUPS = 4;
+#include "ui_adddatedlg.h"
 
 namespace Ui
 {
-	class SubgroupsDlg;
+	class addDateDlg;
 }
 
-class SubgroupsDialog : public QDialog
+class AddDateDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	explicit SubgroupsDialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
-	virtual ~SubgroupsDialog();
+	explicit AddDateDialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
+	virtual ~AddDateDialog();
 	
-	void setTeachregManager(TeachRegManager *manager);
-	void setGroupName(const QString &groupName);
-	
-protected:
-	void closeEvent(QCloseEvent *event);
-	
-private slots:
-	void on_addSubgroupButton_clicked();
-	void on_okButton_clicked();
+	QString getDate() const;
 	
 private:
-	Ui::SubgroupsDlg *ui;
-	TeachRegManager *manager;
-	QString groupName;
-	QListWidget *listSubgroups[MAX_NUM_SUBGROUPS];
-	QLabel *subgroupLabels[MAX_NUM_SUBGROUPS];
-	quint32 curNamSubgroup;
-	
-	void setSubgroups();
-	void clearAll();
+	Ui::addDateDlg *ui;
 };
 
-#endif // SUBGROUPSDIALOG_H
+#endif // ADDDATEDIALOG_H
