@@ -45,7 +45,7 @@ void CreateDbDialog::on_newFileButton_clicked()
 	options |= QFileDialog::DontUseNativeDialog;
 	QString selectedFilter;
 	
-	QString fileName = QFileDialog::getSaveFileName(this, trUtf8("Файл базы данных"), QDir::homePath(), trUtf8("Файлы базы данных (*.trdb)"), &selectedFilter, options);
+	QString fileName = QFileDialog::getSaveFileName(this, trUtf8("Файл базы данных"), QDir::homePath(), trUtf8("Файлы базы данных (*.dbtr)"), &selectedFilter, options);
 	if(!fileName.isEmpty())
 		ui->filePathEdit->setText(fileName);
 }

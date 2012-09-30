@@ -20,7 +20,10 @@
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
 
+#include <QtCore/QDebug>
 #include <QtCore/QObject>
+#include <QtCore/QFile>
+
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtCore/QStringList>
@@ -28,6 +31,7 @@
 #include <QtCore/QList>
 #include <QtSql/QSqlError>
 #include <QtSql/QSqlRecord>
+#include "dbase/databaseteachreg.h"
 
 
 class DataBaseManager : public QObject
@@ -37,9 +41,10 @@ public:
 	virtual ~DataBaseManager();
 	
 	void setDbFilePath(const QString &filePath);
-	bool openDb();
+	bool openDb(const QString &filePath);
 	void closeDb();
 	bool createDb(const QString &about);
+	bool saveDb();
 	QString getAboutDb() const;
 	
 	void addDisciplin(const QString &disciplinName);
@@ -47,8 +52,8 @@ public:
 	void addStudent(const QString &studentName, int groupId, int subgroup = 1);
 	
 	void editDisciplin(int disciplinId, const QString &newDisciplinName);
-	void editGroup(int groupId, const QString &newGroupName);
-	void editStudent(int studentId, const QString &newStudentName);
+	void editGroup(const QString &groupName, const QString &newGroupName);
+	void editStudent(int groupId, const QString &oldStudentName, const QString &newStudentName);
 	
 	void delDisciplin(int disciplinId);
 	void delGroup(int groupId);
@@ -56,7 +61,6 @@ public:
 	
 	int getGroupIdByName(const QString &groupName) const;
 	int getDisciplinIdByName(const QString &disciplinName) const;
-	int getStudentIdByName(const QString &studentName) const;
 	int getNumStudentsInGroup(int groupId) const;
 	
 	QStringList getDisciplinList() const;
@@ -65,29 +69,28 @@ public:
 	QStringList getGroupData(int groupId) const;
 	QStringList getStudentList(int groupId, int numSubgroup = 0) const;
 	
-	void editNumStudentsInGroups(int groupId, int numStudents);
 	void editNumSubgroupInGroups(int groupId, int numSubgroups);
-	void setNumSubgroupForStudent(int studentId, int numSubgroup);
+	void setNumSubgroupForStudent(int groupId, const QString &studentName, int numSubgroup);
 	
-	QString getLectureDates(int groupId, int disciplinId) const;
-	QString getPracticDates(int groupId, int disciplinId, int numSubgroup) const;
-	QString getLectureResults(int groupId, int disciplinId, int studentId) const;
-	QString getPracticResults(int groupId, int disciplinId, int numSubgroup, int studentId) const;
+	QStringList getLectureDates(int groupId, int disciplinId) const;
+	QStringList getPracticDates(int groupId, int disciplinId, int numSubgroup) const;
+	QStringList getLectureResults(int groupId, int disciplinId, const QString &studentName) const;
+	QStringList getPracticResults(int groupId, int disciplinId, const QString &studentName) const;
 	
-	void addLectureDates(int groupId, int disciplinId, const QString &dateList);
-	void addPracticDates(int groupId, int disciplinId, int numSubgroup, const QString &dateList);
-	void addLectureResults(int groupId, int disciplinId, int studentId, const QString &resultList);
-	void addPracticResults(int groupId, int disciplinId, int numSubgroup, int studentId, const QString &resultList);
+	void addLectureDate(int groupId, int disciplinId, const QString &date);
+	void addPracticDate(int groupId, int disciplinId, int numSubgroup, const QString &date);
+	void addLectureResult(int groupId, int disciplinId, const QString &studentName, const QString &result);
+	void addPracticResult(int groupId, int disciplinId, const QString &studentName, const QString &result);
 	
 	void editLectureDates(int groupId, int disciplinId, const QString &dateList);
 	void editPracticDates(int groupId, int disciplinId, int numSubgroup, const QString &dateList);
-	void editLectureResults(int groupId, int disciplinId, int studentId, const QString &resultList);
-	void editPracticResults(int groupId, int disciplinId, int numSubgroup, int studentId, const QString &resultList);
+	void editLectureResults(int groupId, int disciplinId, int pos, const QString &studentName, const QString &result);
+	void editPracticResults(int groupId, int disciplinId, int pos, const QString &studentName, const QString &result);
 	
 private:
-	QSqlDatabase db;
+	DataBaseTeachReg *db;
 	QString dbFilePath;
-	QSqlQuery *query;
+	quint32 magicNumber;
 };
 
 #endif // DATABASEMANAGER_H

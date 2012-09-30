@@ -27,6 +27,7 @@ public:
 	void showDisciplinList();
 	void showGroupslinList();
 	void showLecturesTable();
+	void showPracticsTable();
 	
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -46,6 +47,14 @@ private slots:
 	void on_delGroupButton_clicked();
 	void on_addLectureButton_clicked();
 	void on_lectureViewWidget_cellChanged(int row, int column);
+	void on_groupComboBox_activated(int index);
+	void on_disciplinComboBox_activated(int index);
+	void on_practicGroupComboBox_activated(int index);
+	void on_subgroupComboBox_activated(int index);
+	void on_practicDisciplinComboBox_activated(int index);
+	void on_addPracticButton_clicked();
+	void on_practicViewWidget_cellChanged(int row, int column);
+	void on_actionSave_triggered();
 	
 private:
 	Ui::MainWindow *ui;
@@ -57,6 +66,8 @@ private:
 	QString dbFileName;
 	QString dbDateDir;
 	QStringList *ocenkList;
+	bool onChangedLectureView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
+	bool onChangedPracticView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
 	
 	void createIcons();
 	void writeSettings();

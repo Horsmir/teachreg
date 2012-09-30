@@ -19,16 +19,14 @@
 
 #include "databasemanager.h"
 
-DataBaseManager::DataBaseManager(QObject *parent): QObject(parent)
+DataBaseManager::DataBaseManager(QObject *parent): QObject(parent), db(0)
 {
-	db = QSqlDatabase::addDatabase("QSQLITE");
-	dbFilePath = ":memorry:";
-	query = 0;
+	dbFilePath = "default.dbtr";
+	magicNumber = 0xAAFF452D;
 }
 
 DataBaseManager::~DataBaseManager()
 {
-	delete query;
 }
 
 void DataBaseManager::setDbFilePath(const QString &filePath)
@@ -36,271 +34,276 @@ void DataBaseManager::setDbFilePath(const QString &filePath)
 	dbFilePath = filePath;
 }
 
-bool DataBaseManager::openDb()
+bool DataBaseManager::openDb(const QString &filePath)
 {
-	db.setDatabaseName(dbFilePath);
-	if(!db.open())
+	quint32 magic;
+	quint16 streamVersion;
+	
+	if(db)
 	{
+		if(!saveDb())
+			return false;
+		delete db;
+		db = 0;
+	}
+	dbFilePath = filePath;
+	
+	QFile dbFile(dbFilePath);
+	if(!dbFile.exists())
+	{
+		qDebug() << "DataBase file " << dbFilePath << " no exist.";
 		return false;
 	}
-	query = new QSqlQuery(db);
+	if(!dbFile.open(QIODevice::ReadOnly))
+	{
+		qDebug() << "Can not open file " << dbFilePath << " for reading. Error: " << dbFile.errorString();
+		return false;
+	}
+	
+	QDataStream in(&dbFile);
+	in >> magic >> streamVersion;
+	if(magic != magicNumber)
+	{
+		qDebug() << "ERROR: File is not recognized by this application";
+		return false;
+	}
+	else if(streamVersion > in.version())
+	{
+		qDebug() << "ERROR: File is from a more recent version of the application";
+		return false;
+	}
+	
+	db = new DataBaseTeachReg(this);
+	in >> *db;
 	return true;
 }
 
-void DataBaseManager::closeDb()
+bool DataBaseManager::saveDb()
 {
-	db.close();
+	QFile file(dbFilePath);
+	
+	if(!file.open(QIODevice::WriteOnly))
+	{
+		qDebug() << "ERROR: Cannot open file" << dbFilePath << " for writing: " << file.errorString();
+		return false;
+	}
+	
+	QDataStream out(&file);
+	out << quint32(magicNumber) << quint16(out.version());
+	out << *db;
+	return true;
 }
 
 bool DataBaseManager::createDb(const QString &about)
 {
-	query->clear();
-	query->exec("CREATE TABLE \"info\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"about\" TEXT NOT NULL)");
-	query->exec("CREATE TABLE \"disciplins\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"name\" TEXT NOT NULL)");
-	query->exec("CREATE TABLE \"groups\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"name\" TEXT NOT NULL, \"num_students\" INTEGER DEFAULT (0), \"num_subgroups\" INTEGER DEFAULT (0))");
-	query->exec("CREATE TABLE \"students\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"name\" TEXT NOT NULL, \"group_id\" INTEGER NOT NULL, \"num_subgroup\" INTEGER DEFAULT (0))");
-	query->exec("CREATE TABLE \"lectures_dates\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"group_id\" INTEGER NOT NULL, \"disciplin_id\" INTEGER NOT NULL, \"date_list\" TEXT)");
-	query->exec("CREATE TABLE \"practics_dates\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"group_id\" INTEGER NOT NULL, \"num_subgroup\" INTEGER, \"disciplin_id\" INTEGER NOT NULL, \"date_list\" TEXT)");
-	query->exec("CREATE TABLE \"lectures_results\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"student_id\" INTEGER NOT NULL, \"group_id\" INTEGER NOT NULL, \"disciplin_id\" INTEGER NOT NULL, \"result_list\" TEXT)");
-	query->exec("CREATE TABLE \"practics_results\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"student_id\" INTEGER NOT NULL, \"group_id\" INTEGER NOT NULL, \"disciplin_id\" INTEGER NOT NULL, \"num_subgroup\" INTEGER NOT NULL, \"result_list\" TEXT)");
-	query->exec("CREATE TABLE \"results\" (\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \"student_id\" INTEGER NOT NULL, \"group_id\" INTEGER NOT NULL, \"disciplin_id\" INTEGER NOT NULL, \"lecture_result\" INTEGER, \"practic_result\" INTEGER, \"all_result\" TEXT)");
-	
-	query->exec("INSERT INTO info (about) VALUES('" + about + "')");
-	
+	if(db)
+	{
+		if(!saveDb())
+			return false;
+		delete db;
+		db = 0;
+	}
+	db = new DataBaseTeachReg(this);
+	db->setDescription(about);
 	return true;
 }
 
 QString DataBaseManager::getAboutDb() const
 {
-	query->exec("SELECT about FROM info");
-	if(query->next())
-		return query->value(0).toString();
-	else
-		return db.lastError().text();
+	return db->getDescription();
 }
 
 void DataBaseManager::addDisciplin(const QString &disciplinName)
 {
-	query->exec("INSERT INTO disciplins(name) VALUES('" + disciplinName + "')" );
+	db->addDisciplin(disciplinName);
 }
 
 void DataBaseManager::addGroup(const QString &groupName)
 {
-	query->exec("INSERT INTO groups(name) VALUES('" + groupName + "')");
+	Group gr;
+	gr.setParent(db);
+	gr.setName(groupName);
+	db->addGroup(gr);
 }
 
 void DataBaseManager::addStudent(const QString &studentName, int groupId, int subgroup)
 {
-	query->exec(QString("INSERT INTO students(name, group_id, num_subgroup) VALUES('%1', %2, %3)").arg(studentName).arg(groupId).arg(subgroup));
-	editNumStudentsInGroups(groupId, getNumStudentsInGroup(groupId) + 1);
+	Student st;
+	st.setName(studentName);
+	st.setSubgroupId(subgroup);
+	
+	Group *gr = db->getGroupPtr(groupId);
+	st.setParent(gr);
+	gr->addStudent(st);
 }
 
 int DataBaseManager::getGroupIdByName(const QString &groupName) const
 {
-	query->exec("SELECT id FROM groups WHERE name='" + groupName + "'");
-	if(query->next())
-		return query->value(0).toInt();
-	else
-		return -1;
+	return db->getGroupId(groupName);
 }
 
 int DataBaseManager::getDisciplinIdByName(const QString &disciplinName) const
 {
-	query->exec("SELECT id FROM disciplins WHERE name='" + disciplinName + "'");
-	if(query->next())
-		return query->value(0).toInt();
-	else
-		return -1;
-}
-
-int DataBaseManager::getStudentIdByName(const QString &studentName) const
-{
-	query->exec("SELECT id FROM students WHERE name='" + studentName + "'");
-	if(query->next())
-		return query->value(0).toInt();
-	else
-		return -1;
+	return db->getDisciplinId(disciplinName);
 }
 
 QStringList DataBaseManager::getDisciplinList() const
 {
-	QStringList ret;
-	query->exec("SELECT name FROM disciplins");
-	while(query->next())
-		ret << query->value(0).toString();
-	return ret;
+	return db->getDisciplinList();
 }
 
 QStringList DataBaseManager::getGroupNamesList() const
 {
 	QStringList ret;
-	query->exec("SELECT name FROM groups");
-	while(query->next())
-		ret << query->value(0).toString();
+	for(int i = 0; i < db->countGroups(); i++)
+		ret << db->getGroup(i).getName();
 	return ret;
 }
 
 QStringList DataBaseManager::getStudentList(int groupId, int numSubgroup) const
 {
 	QStringList ret;
-	QString queryString = QString("SELECT name FROM students WHERE group_id=%1").arg(groupId);
-	if(numSubgroup != 0)
-		queryString += QString(" AND num_subgroup=%1").arg(numSubgroup);
+	Group gr = db->getGroup(groupId);
+	if(numSubgroup == 0)
+		for(int i = 0; i < gr.count(); i++)
+		{
+			ret << gr.getStudent(i).getName();
+		}
+	else
+		for(int i = 0; i < gr.count(); i++)
+		{
+			if(gr.getStudent(i).getSubgroupId() == numSubgroup)
+				ret << gr.getStudent(i).getName();
+		}
 	
-	query->exec(queryString);
-	while(query->next())
-		ret << query->value(0).toString();
 	return ret;
-}
-
-void DataBaseManager::editNumStudentsInGroups(int groupId, int numStudents)
-{
-	query->exec(QString("UPDATE groups SET num_students=%1 WHERE id=%2").arg(numStudents).arg(groupId));
 }
 
 int DataBaseManager::getNumStudentsInGroup(int groupId) const
 {
-	query->exec(QString("SELECT num_students FROM groups WHERE id=%1").arg(groupId));
-	if(query->next())
-		return query->value(0).toInt();
-	return 0;
+	return db->getGroup(groupId).count();
 }
 
 void DataBaseManager::editNumSubgroupInGroups(int groupId, int numSubgroups)
 {
-	query->exec(QString("UPDATE groups SET num_subgroups=%1 WHERE id=%2").arg(numSubgroups).arg(groupId));
+	Group *gr = db->getGroupPtr(groupId);
+	gr->setNumSubgroups(numSubgroups);
 }
 
-void DataBaseManager::setNumSubgroupForStudent(int studentId, int numSubgroup)
+void DataBaseManager::setNumSubgroupForStudent(int groupId, const QString &studentName, int numSubgroup)
 {
-	query->exec(QString("UPDATE students SET num_subgroup=%1 WHERE id=%2").arg(numSubgroup).arg(studentId));
+	Group *gr = db->getGroupPtr(groupId);
+	Student *st = gr->getStudentPtr(studentName);
+	st->setSubgroupId(numSubgroup);
 }
 
-QString DataBaseManager::getLectureDates(int groupId, int disciplinId) const
+QStringList DataBaseManager::getLectureDates(int groupId, int disciplinId) const
 {
-	query->exec(QString("SELECT date_list FROM lectures_dates WHERE group_id=%1 AND disciplin_id=%2").arg(groupId).arg(disciplinId));
-	if(query->next())
-		return query->value(0).toString();
-	else
-		return QString();
+	return db->getGroup(groupId).getLectureDate(disciplinId);
 }
 
-QString DataBaseManager::getPracticDates(int groupId, int disciplinId, int numSubgroup) const
+QStringList DataBaseManager::getPracticDates(int groupId, int disciplinId, int numSubgroup) const
 {
-	query->exec(QString("SELECT date_list FROM practics_dates WHERE group_id=%1 AND disciplin_id=%2 AND num_subgroup=%3").arg(groupId).arg(disciplinId).arg(numSubgroup));
-	if(query->next())
-		return query->value(0).toString();
-	else
-		return QString();
+	return db->getGroup(groupId).getPracticDate(disciplinId * 10 + numSubgroup);
 }
 
-QString DataBaseManager::getLectureResults(int groupId, int disciplinId, int studentId) const
+QStringList DataBaseManager::getLectureResults(int groupId, int disciplinId, const QString &studentName) const
 {
-	query->exec(QString("SELECT result_list FROM lectures_results WHERE group_id=%1 AND disciplin_id=%2 AND student_id=%3").arg(groupId).arg(disciplinId).arg(studentId));
-	if(query->next())
-		return query->value(0).toString();
-	else
-		return QString();
+	return db->getGroup(groupId).getStudent(studentName).getLectureResults(disciplinId);
 }
 
-QString DataBaseManager::getPracticResults(int groupId, int disciplinId, int numSubgroup, int studentId) const
+QStringList DataBaseManager::getPracticResults(int groupId, int disciplinId, const QString &studentName) const
 {
-	query->exec(QString("SELECT result_list FROM practics_results WHERE group_id=%1 AND disciplin_id=%2 AND num_subgroup=%3 AND student_id=%4").arg(groupId).arg(disciplinId).arg(numSubgroup).arg(studentId));
-	if(query->next())
-		return query->value(0).toString();
-	else
-		return QString();
+	return db->getGroup(groupId).getStudent(studentName).getPracticResults(disciplinId);
 }
 
-void DataBaseManager::addLectureDates(int groupId, int disciplinId, const QString &dateList)
+void DataBaseManager::addLectureDate(int groupId, int disciplinId, const QString &date)
 {
-	query->exec(QString("INSERT INTO lectures_dates(group_id, disciplin_id, date_list) VALUES(%1, %2, '%3')").arg(groupId).arg(disciplinId).arg(dateList));
+	Group *gr = db->getGroupPtr(groupId);
+	gr->addLectureDate(disciplinId, date);
+	for(int i = 0; i < gr->count(); i++)
+		gr->getStudentPtr(i)->addLectureResult(disciplinId, "0");
 }
 
-void DataBaseManager::addPracticDates(int groupId, int disciplinId, int numSubgroup, const QString &dateList)
+void DataBaseManager::addPracticDate(int groupId, int disciplinId, int numSubgroup, const QString &date)
 {
-	query->exec(QString("INSERT INTO practics_dates(group_id, disciplin_id, num_subgroup, date_list) VALUES(%1, %2, %3, '%4')").arg(groupId).arg(disciplinId).arg(numSubgroup).arg(dateList));
+	Group *gr = db->getGroupPtr(groupId);
+	gr->addPracticDate(disciplinId * 10 + numSubgroup, date);
+	for(int i = 0; i < gr->count(); i++)
+	{
+		if(gr->getStudentPtr(i)->getSubgroupId() == numSubgroup)
+			gr->getStudentPtr(i)->addPracticResult(disciplinId, "0");
+	}
 }
 
-void DataBaseManager::addLectureResults(int groupId, int disciplinId, int studentId, const QString &resultList)
+void DataBaseManager::addLectureResult(int groupId, int disciplinId, const QString &studentName, const QString &result)
 {
-	query->exec(QString("INSERT INTO lectures_results(group_id, disciplin_id, result_list) VALUES(%1, %2, '%3')").arg(groupId).arg(disciplinId).arg(resultList));
+	db->getGroupPtr(groupId)->getStudentPtr(studentName)->addLectureResult(disciplinId, result);
 }
 
-void DataBaseManager::addPracticResults(int groupId, int disciplinId, int numSubgroup, int studentId, const QString &resultList)
+void DataBaseManager::addPracticResult(int groupId, int disciplinId, const QString &studentName, const QString &result)
 {
-	query->exec(QString("INSERT INTO practics_results(group_id, disciplin_id, num_subgroup, result_list) VALUES(%1, %2, %3, '%4')").arg(groupId).arg(disciplinId).arg(numSubgroup).arg(resultList));
+	db->getGroupPtr(groupId)->getStudentPtr(studentName)->addPracticResult(disciplinId, result);
 }
 
 void DataBaseManager::editLectureDates(int groupId, int disciplinId, const QString &dateList)
 {
-	query->exec(QString("UPDATE lectures_dates SET date_list='%1' WHERE group_id=%2 AND disciplin_id=%3").arg(dateList).arg(groupId).arg(disciplinId));
+	// TODO: 
 }
 
 void DataBaseManager::editPracticDates(int groupId, int disciplinId, int numSubgroup, const QString &dateList)
 {
-	query->exec(QString("UPDATE practicd-dates SET date_list=%1 WHERE group_id=%2 AND disciplin_id=%3 AND num_subgroup=%4").arg(dateList).arg(groupId).arg(disciplinId).arg(numSubgroup));
+	// TODO
 }
 
-void DataBaseManager::editLectureResults(int groupId, int disciplinId, int studentId, const QString &resultList)
+void DataBaseManager::editLectureResults(int groupId, int disciplinId, int pos, const QString &studentName, const QString &result)
 {
-	query->exec(QString("UPDATE lectures_results SET result_list=%1 WHERE group_id=%2 AND disciplin_id=%3 AND student_id=%4").arg(resultList).arg(groupId).arg(disciplinId).arg(studentId));
+	db->editLectureResult(groupId, disciplinId, studentName, pos, result);
 }
 
-void DataBaseManager::editPracticResults(int groupId, int disciplinId, int numSubgroup, int studentId, const QString &resultList)
+void DataBaseManager::editPracticResults(int groupId, int disciplinId, int pos, const QString &studentName, const QString &result)
 {
-	query->exec(QString("UPDATE practics_results SET result_list=%1 WHERE group_id=%2 AND disciplin_id=%3 AND num_subgroup=%4 AND student_id=%5").arg(resultList).arg(groupId).arg(disciplinId).arg(numSubgroup).arg(studentId));
+	db->editPracticResult(groupId, disciplinId, studentName, pos, result);
 }
 
 void DataBaseManager::delDisciplin(int disciplinId)
 {
-	query->exec(QString("DELETE FROM disciplins WHERE id=%1").arg(disciplinId));
+	// TODO
 }
 
 void DataBaseManager::delGroup(int groupId)
 {
-	query->exec(QString("DELETE FROM groups WHERE id=%1").arg(groupId));
+	// TODO
 }
 
 void DataBaseManager::delStudent(int studentId)
 {
-	int groupId = -1;
-	query->exec(QString("SELECT group_id FROM students WHERE id=%1").arg(studentId));
-	if(query->next())
-	{
-		groupId = query->value(0).toInt();
-	}
-	
-	query->exec(QString("DELETE FROM students WHERE id=%1").arg(studentId));
-	editNumStudentsInGroups(groupId, getNumStudentsInGroup(groupId) - 1);
+	// TODO
 }
 
 void DataBaseManager::editDisciplin(int disciplinId, const QString &newDisciplinName)
 {
-	query->exec(QString("UPDATE disciplins SET name='%1' WHERE id=%2").arg(newDisciplinName).arg(disciplinId));
+	db->editDisciplin(disciplinId, newDisciplinName);
 }
 
-void DataBaseManager::editGroup(int groupId, const QString &newGroupName)
+void DataBaseManager::editGroup(const QString &groupName, const QString &newGroupName)
 {
-	query->exec(QString("UPDATE groups SET name='%1' WHERE id=%2").arg(newGroupName).arg(groupId));
+	db->getGroupPtr(groupName)->setName(newGroupName);
 }
 
-void DataBaseManager::editStudent(int studentId, const QString &newStudentName)
+void DataBaseManager::editStudent(int groupId, const QString &oldStudentName, const QString &newStudentName)
 {
-	query->exec(QString("UPDATE students SET name='%1' WHERE id=%2").arg(newStudentName).arg(studentId));
+	db->getGroupPtr(groupId)->getStudentPtr(oldStudentName)->setName(newStudentName);
 }
 
 QList< QStringList > DataBaseManager::getGroupsList() const
 {
 	QList<QStringList> ret;
-	query->exec("SELECT name, num_students, num_subgroups FROM groups");
-	
-	while(query->next())
+	for(int i = 0; i < db->countGroups(); i++)
 	{
 		QStringList group;
-		group << query->value(0).toString();
-		group << QString().setNum(query->value(1).toInt());
-		group << QString().setNum(query->value(2).toInt());
+		Group gr = db->getGroup(i);
+		group << gr.getName() << QString().setNum(gr.count()) << QString().setNum(gr.getNumSubgroups());
 		ret << group;
 	}
 	return ret;
@@ -309,14 +312,7 @@ QList< QStringList > DataBaseManager::getGroupsList() const
 QStringList DataBaseManager::getGroupData(int groupId) const
 {
 	QStringList ret;
-	query->exec(QString("SELECT * FROM groups WHERE id=%1").arg(groupId));
-	
-	if(query->next())
-	{
-		ret << QString().setNum(query->value(0).toInt());
-		ret << query->value(1).toString();
-		ret << QString().setNum(query->value(2).toInt());
-		ret << QString().setNum(query->value(3).toInt());
-	}
+	Group gr = db->getGroup(groupId);
+	ret << gr.getName() << QString().setNum(gr.count()) << QString().setNum(gr.getNumSubgroups());
 	return ret;
 }

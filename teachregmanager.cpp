@@ -31,8 +31,7 @@ TeachRegManager::~TeachRegManager()
 
 bool TeachRegManager::loadDB(const QString &dbFilePath)
 {
-	dbManager->setDbFilePath(dbFilePath);
-	return dbManager->openDb();
+	return dbManager->openDb(dbFilePath);
 }
 
 QString TeachRegManager::getAboutDB() const
@@ -42,11 +41,10 @@ QString TeachRegManager::getAboutDB() const
 
 bool TeachRegManager::createDB(const QString &dbFilePath, const QString &aboutString)
 {
-	dbManager->setDbFilePath(dbFilePath);
-	if(dbManager->openDb())
-		return dbManager->createDb(aboutString);
-	else
+	if(!dbManager->createDb(aboutString))
 		return false;
+	dbManager->setDbFilePath(dbFilePath);
+	return true;
 }
 
 QStringList TeachRegManager::getDisciplinsList() const
@@ -97,45 +95,17 @@ QStringList TeachRegManager::getStudentsSubgroupList(const QString &groupName, q
 void TeachRegManager::addGroup(const QString &groupName)
 {
 	dbManager->addGroup(groupName);
-	int g = dbManager->getGroupIdByName(groupName);
-	QStringList disciplins = dbManager->getDisciplinList();
-	for(int i = 0; i < disciplins.count(); i++)
-	{
-		int d = dbManager->getDisciplinIdByName(disciplins.at(i));
-		dbManager->addLectureDates(g, d, QString());
-	}
 }
 
 void TeachRegManager::editGroup(const QString &oldGroupName, const QString &newGroupName)
 {
-	int groupId = dbManager->getGroupIdByName(oldGroupName);
-	dbManager->editGroup(groupId, newGroupName);
-}
-
-void TeachRegManager::editGroupNumStudents(const QString &groupName, quint32 numStudents)
-{
-	int groupId = dbManager->getGroupIdByName(groupName);
-	dbManager->editNumStudentsInGroups(groupId, numStudents);
+	dbManager->editGroup(oldGroupName, newGroupName);
 }
 
 void TeachRegManager::editGroupNumSubgroups(const QString &groupName, quint32 numSubgroup)
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
-	
-	quint32 oldNumSubgroups = dbManager->getGroupData(groupId).at(3).toInt();
-	
-	QStringList disciplins = dbManager->getDisciplinList();
-	
 	dbManager->editNumSubgroupInGroups(groupId, numSubgroup);
-	
-	for(quint32 i = oldNumSubgroups + 1; i <= numSubgroup; i++)
-	{
-		for(int j = 0; j < disciplins.count(); j++)
-		{
-			int d = dbManager->getDisciplinIdByName(disciplins.at(i));
-			dbManager->addPracticDates(groupId, d, i, QString());
-		}
-	}
 }
 
 void TeachRegManager::delGroup(const QString &oldGroupName)
@@ -144,10 +114,10 @@ void TeachRegManager::delGroup(const QString &oldGroupName)
 	dbManager->delGroup(groupId);
 }
 
-void TeachRegManager::changeSubgroup(quint32 numSubgroup, const QString &studentName)
+void TeachRegManager::changeSubgroup(const QString &groupName, quint32 numSubgroup, const QString &studentName)
 {
-	int studentId = dbManager->getStudentIdByName(studentName);
-	dbManager->setNumSubgroupForStudent(studentId, numSubgroup);
+	int groupId = dbManager->getGroupIdByName(groupName);
+	dbManager->setNumSubgroupForStudent(groupId, studentName, numSubgroup);
 }
 
 void TeachRegManager::addStudentName(const QString &studentName, const QString &groupName)
@@ -156,114 +126,80 @@ void TeachRegManager::addStudentName(const QString &studentName, const QString &
 	dbManager->addStudent(studentName, groupId);
 }
 
-void TeachRegManager::editStudentName(const QString &oldStudentName, const QString &newStudentName)
+void TeachRegManager::editStudentName(const QString &groupName, const QString &oldStudentName, const QString &newStudentName)
 {
-	int studentId = dbManager->getStudentIdByName(oldStudentName);
-	dbManager->editStudent(studentId, newStudentName);
+	int groupId = dbManager->getGroupIdByName(groupName);
+	dbManager->editStudent(groupId, oldStudentName, newStudentName);
 }
 
 void TeachRegManager::delStudent(const QString &studentName)
 {
-	int studentId = dbManager->getStudentIdByName(studentName);
-	dbManager->delStudent(studentId);
+	// TODO
 }
 
 QStringList TeachRegManager::getLecturesDateList(const QString &groupName, const QString &disciplinName) const
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	return dbManager->getLectureDates(groupId, disciplinId).split(SEPAR);
+	return dbManager->getLectureDates(groupId, disciplinId);
 }
 
 QStringList TeachRegManager::getPracticsDateList(const QString &groupName, const QString &disciplinName, quint32 numSubgroup) const
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	return dbManager->getPracticDates(groupId, disciplinId, numSubgroup).split(SEPAR);
+	return dbManager->getPracticDates(groupId, disciplinId, numSubgroup);
 }
 
 void TeachRegManager::addLecture(const QString &groupName, const QString &disciplinName, const QString &date)
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	QString dateList = dbManager->getLectureDates(groupId, disciplinId);
-	if(!dateList.isEmpty())
-		dateList += SEPAR;
-	dateList += date;
-	dbManager->editLectureDates(groupId, disciplinId, dateList);
-	
-	QStringList students = dbManager->getStudentList(groupId);
-	for(int i = 0; i < students.count(); i++)
-	{
-		int studentId = dbManager->getStudentIdByName(students.at(i));
-		QString ocenks = dbManager->getLectureResults(groupId, disciplinId, studentId);
-		if(!ocenks.isEmpty())
-			ocenks += SEPAR + "0";
-		else
-			ocenks = "0";
-		dbManager->editLectureResults(groupId, disciplinId, studentId, ocenks);
-	}
+	dbManager->addLectureDate(groupId, disciplinId, date);
 }
 
 void TeachRegManager::addPractic(const QString &groupName, const QString &disciplinName, quint32 numSubgroup, const QString &date)
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	QString dateList = dbManager->getPracticDates(groupId, disciplinId, numSubgroup);
-	if(!dateList.isEmpty())
-		dateList += SEPAR;
-	dateList += date;
-	dbManager->editPracticDates(groupId, disciplinId, numSubgroup, dateList);
+	dbManager->addPracticDate(groupId, disciplinId, numSubgroup, date);
 }
 
 QStringList TeachRegManager::getLecturesResultList(const QString &groupName, const QString &disciplinNam, const QString &studentName) const
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	int studentId = dbManager->getStudentIdByName(studentName);
-	return dbManager->getLectureResults(groupId, disciplinId, studentId).split(SEPAR);
+	return dbManager->getLectureResults(groupId, disciplinId, studentName);
 }
 
 QStringList TeachRegManager::getPracticsResultList(const QString &groupName, const QString &disciplinNam, quint32 numSubgroup, const QString &studentName) const
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	int studentId = dbManager->getStudentIdByName(studentName);
-	return dbManager->getPracticResults(groupId, disciplinId, numSubgroup, studentId).split(SEPAR);
+	return dbManager->getPracticResults(groupId, disciplinId, studentName);
 }
 
-void TeachRegManager::addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, const QString &date, const QString &result)
+void TeachRegManager::addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result)
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	int studentId = dbManager->getStudentIdByName(studentName);
-	
-	QStringList dateList = dbManager->getLectureDates(groupId, disciplinId).split(SEPAR);
-	int dateId = dateList.indexOf(date);
-	
-	QStringList resultList = dbManager->getLectureResults(groupId, disciplinId, studentId).split(SEPAR);
-	resultList[dateId] = result;
-	
-	dbManager->editLectureResults(groupId, disciplinId, studentId, resultList.join(SEPAR));
+	dbManager->editLectureResults(groupId, disciplinId, pos, studentName, result);
 }
 
-void TeachRegManager::addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, const QString &date, quint32 numSubgroup, const QString &result)
+void TeachRegManager::addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result)
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	int studentId = dbManager->getStudentIdByName(studentName);
-	
-	QStringList dateList = dbManager->getPracticDates(groupId, disciplinId, numSubgroup).split(SEPAR);
-	int dateId = dateList.indexOf(date);
-	
-	QStringList resultList = dbManager->getPracticResults(groupId, disciplinId, numSubgroup, studentId).split(SEPAR);
-	resultList[dateId] = result;
-	
-	dbManager->editPracticResults(groupId, disciplinId, numSubgroup, studentId, resultList.join(SEPAR));
+	dbManager->editPracticResults(groupId, disciplinId, pos, studentName, result);
 }
 
 QStringList TeachRegManager::getGroupData(const QString &groupName) const
 {
 	int groupId = dbManager->getGroupIdByName(groupName);
 	return dbManager->getGroupData(groupId);
+}
+
+bool TeachRegManager::saveDB()
+{
+	dbManager->saveDb();
 }

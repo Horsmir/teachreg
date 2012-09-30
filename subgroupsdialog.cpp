@@ -60,7 +60,7 @@ void SubgroupsDialog::setTeachregManager(TeachRegManager *manager)
 
 void SubgroupsDialog::setSubgroups()
 {
-	int numSubgroups = manager->getGroupData(groupName).at(3).toInt();
+	int numSubgroups = manager->getGroupData(groupName).at(2).toInt();
 	if(!numSubgroups)
 		ui->subgroupsWidget1->addItems(manager->getStudentsList(groupName));
 	else
@@ -106,7 +106,7 @@ void SubgroupsDialog::on_okButton_clicked()
 	for(int i = 0; i < curNamSubgroup; i++)
 	{
 		for(int j = 0; j < listSubgroups[i]->count(); j++)
-			manager->changeSubgroup(i + 1, listSubgroups[i]->item(j)->text());
+			manager->changeSubgroup(groupName, i + 1, listSubgroups[i]->item(j)->text());
 	}
 	close();
 }

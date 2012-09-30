@@ -35,6 +35,7 @@ public:
 	bool loadDB(const QString &dbFilePath);
 	QString getAboutDB() const;
 	bool createDB(const QString &dbFilePath, const QString &aboutString);
+	bool saveDB();
 	
 	QStringList getDisciplinsList() const;
 	void addDisciplin(const QString &disciplinName);
@@ -48,12 +49,11 @@ public:
 	QStringList getStudentsSubgroupList(const QString &groupName, quint32 numSubgroup) const;
 	void addGroup(const QString &groupName);
 	void editGroup(const QString &oldGroupName, const QString &newGroupName);
-	void editGroupNumStudents(const QString &groupName, quint32 numStudents);
 	void editGroupNumSubgroups(const QString &groupName, quint32 numSubgroup);
 	void delGroup(const QString &oldGroupName);
-	void changeSubgroup(quint32 numSubgroup, const QString &studentName);
+	void changeSubgroup(const QString &groupName, quint32 numSubgroup, const QString &studentName);
 	void addStudentName(const QString &studentName, const QString &groupName);
-	void editStudentName(const QString &oldStudentName, const QString &newStudentName);
+	void editStudentName(const QString &groupName, const QString &oldStudentName, const QString &newStudentName);
 	void delStudent(const QString &studentName);
 	
 	QStringList getLecturesDateList(const QString &groupName, const QString &disciplinName) const;
@@ -63,8 +63,8 @@ public:
 	
 	QStringList getLecturesResultList(const QString &groupName, const QString &disciplinNam, const QString &studentName) const;
 	QStringList getPracticsResultList(const QString &groupName, const QString &disciplinNam, quint32 numSubgroup, const QString &studentName) const;
-	void addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, const QString &date, const QString &result);
-	void addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, const QString &date, quint32 numSubgroup, const QString &result);
+	void addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result);
+	void addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result);
 	
 private:
 	DataBaseManager *dbManager;

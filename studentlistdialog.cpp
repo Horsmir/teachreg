@@ -91,7 +91,7 @@ void StudentListDialog::on_editStudentButton_clicked()
 	QString text = QInputDialog::getText(this, trUtf8("Изменить студента"), trUtf8("Фамилия Имя:"), QLineEdit::Normal, curStudentName, &ok);
 	if(ok && !text.isEmpty())
 	{
-		manager->editStudentName(curStudentName, text);
+		manager->editStudentName(groupName, curStudentName, text);
 		setStudentList();
 	}
 }
