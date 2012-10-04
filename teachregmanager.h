@@ -66,6 +66,9 @@ public:
 	void addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result);
 	void addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result);
 	
+	QList<float> getLectureTotals(const QString &groupName, const QString &disciplinName) const;
+	QList<float> getPracticTotals(const QString &groupName, const QString &disciplinName, int subgroupId) const;
+	
 private:
 	DataBaseManager *dbManager;
 };

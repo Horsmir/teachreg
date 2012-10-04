@@ -36,13 +36,13 @@ public:
 	int getSubgroupId() const;
 	QStringList getLectureResults(int disciplinId) const;
 	QStringList getPracticResults(int disciplinId) const;
-	QString getLectureTotal(int disciplinId) const;
-	QString getPracticTotal(int disciplinId) const;
+	float getLectureTotal(int disciplinId) const;
+	float getPracticTotal(int disciplinId) const;
 	
 	void setName(const QString &studentName);
 	void setSubgroupId(int subgroupId);
-	void setLectureTotal(int disciplinId, const QString &total);
-	void setPracticTotal(int disciplinId, const QString &total);
+	void setLectureTotal(int disciplinId, float total);
+	void setPracticTotal(int disciplinId, float total);
 	
 	void addLectureResult(int disciplinId, const QString &result);
 	void addPracticResult(int disciplinId, const QString &result);
@@ -52,13 +52,13 @@ public:
 	
 	QMap<int, QStringList> getLectureResultsMap() const;
 	QMap<int, QStringList> getPracticResultsMap() const;
-	QMap<int, QString> getLectureTotalMap() const;
-	QMap<int, QString> getPracticTotalMap() const;
+	QMap<int, float> getLectureTotalMap() const;
+	QMap<int, float> getPracticTotalMap() const;
 	
 	void setLectureResultsMap(QMap<int, QStringList> lr);
 	void setPracticResultsMap(QMap<int, QStringList> pr);
-	void setLectureTotalMap(QMap<int, QString> lt);
-	void setPracticTotalMap(QMap<int, QString> pt);
+	void setLectureTotalMap(QMap< int, float > lt);
+	void setPracticTotalMap(QMap< int, float > pt);
 	
 	void repleceLectureResult(int disciplinId, int pos, const QString &newResult);
 	void replecePracticResult(int disciplinId, int pos, const QString &newResult);
@@ -70,8 +70,8 @@ private:
 	int subgroupId;
 	QMap<int, QStringList> lectureResultsMap; // список списков оценок на лекциях по каждой дисциплине
 	QMap<int, QStringList> practicResultsMap; // список списков оценок на практике по каждой дисциплине
-	QMap<int, QString> lectureTotalMap;       // список итоговых оценок по лекциям по каждой дисциплине
-	QMap<int, QString> practicTotalMap;       // список итоговых оценок по практике по каждой дисциплине
+	QMap<int, float> lectureTotalMap;       // список итоговых оценок по лекциям по каждой дисциплине
+	QMap<int, float> practicTotalMap;       // список итоговых оценок по практике по каждой дисциплине
 };
 
 QDataStream &operator<<(QDataStream &out, const Student &student);

@@ -191,6 +191,31 @@ void Group::replecepracticResult(int studentId, int disciplinId, int pos, const 
 	(&studentList[studentId])->replecePracticResult(disciplinId, pos, newResult);
 }
 
+QList< float > Group::getLectureTotals(int disciplinId)
+{
+	QList<float> ret;
+	for(int i = 0; i < count(); i++)
+	{
+		getStudentPtr(i)->calculateLectureTotal(disciplinId);
+		ret << studentList.at(i).getLectureTotal(disciplinId);
+	}
+	return ret;
+}
+
+QList< float > Group::getPracticTotals(int disciplinId, int subgroupId)
+{
+	QList<float> ret;
+	for(int i = 0; i < count(); i++)
+	{
+		if(studentList.at(i).getSubgroupId() == subgroupId)
+		{
+			getStudentPtr(i)->calculatePracticTotal(disciplinId);
+			ret << studentList.at(i).getPracticTotal(disciplinId);
+		}
+	}
+	return ret;
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 
 QDataStream &operator<<(QDataStream &out, const Group &gr)

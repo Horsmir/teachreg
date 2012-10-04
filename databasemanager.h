@@ -42,7 +42,6 @@ public:
 	
 	void setDbFilePath(const QString &filePath);
 	bool openDb(const QString &filePath);
-	void closeDb();
 	bool createDb(const QString &about);
 	bool saveDb();
 	QString getAboutDb() const;
@@ -86,6 +85,9 @@ public:
 	void editPracticDates(int groupId, int disciplinId, int numSubgroup, const QString &dateList);
 	void editLectureResults(int groupId, int disciplinId, int pos, const QString &studentName, const QString &result);
 	void editPracticResults(int groupId, int disciplinId, int pos, const QString &studentName, const QString &result);
+	
+	QList<float> getLectureTotals(int groupId, int disciplinId) const;
+	QList<float> getPracticTotals(int groupId, int disciplinId, int subgroupId) const;
 	
 private:
 	DataBaseTeachReg *db;

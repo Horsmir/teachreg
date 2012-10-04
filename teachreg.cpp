@@ -29,6 +29,8 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	}
 	
 	createIcons();
+	ui->subgroupResultComboBox->setVisible(false);
+	ui->label_20->setVisible(false);
 	
 	ocenkList = new QStringList;
 	ocenkList->append("");
@@ -40,6 +42,8 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	
 	onChangedLectureView = false;
 	onChangedPracticView = false;
+	
+	htmlGenerator = new HtmlGenerator(this);
 }
 
 TeachReg::~TeachReg()
@@ -74,6 +78,11 @@ void TeachReg::createIcons()
 	practicsButton->setIcon(QIcon(":/images/practics.png"));
 	practicsButton->setText(trUtf8("Практика"));
 	practicsButton->setTextAlignment(Qt::AlignHCenter);
+	
+	QListWidgetItem *resultsButton = new QListWidgetItem(ui->contentsWidget);
+	resultsButton->setIcon(QIcon(":/images/results.png"));
+	resultsButton->setText(trUtf8("Итог"));
+	resultsButton->setTextAlignment(Qt::AlignHCenter);
 }
 
 void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
@@ -106,6 +115,12 @@ void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QL
 			ui->practicGroupComboBox->addItems(manager->getGroupsNamesList());
 			ui->practicDisciplinComboBox->addItems(manager->getDisciplinsList());
 			on_practicGroupComboBox_activated(0);
+			break;
+		case 5:
+			ui->groupResultComboBox->addItems(manager->getGroupsNamesList());
+			ui->groupResultComboBox->setCurrentIndex(0);
+			ui->disciplinResultComboBox->addItems(manager->getDisciplinsList());
+			ui->disciplinResultComboBox->setCurrentIndex(0);
 			break;
 		default:
 			break;
@@ -450,6 +465,114 @@ void TeachReg::on_practicViewWidget_cellChanged(int row, int column)
 void TeachReg::on_actionSave_triggered()
 {
 	manager->saveDB();
+}
+
+void TeachReg::on_actionAboutQt_triggered()
+{
+	qApp->aboutQt();
+}
+
+void TeachReg::on_actionCreate_triggered()
+{
+	on_createDbButton_clicked();
+}
+
+void TeachReg::on_actionOpen_triggered()
+{
+	on_selectDbFilePathButton_clicked();
+}
+
+QString TeachReg::roundResult(float num, int pers)
+{
+	float ret = round(num * pow10(pers));
+	QString tmp = QString().setNum(ret / pow10(pers), 'f', pers);
+	return tmp;
+}
+
+void TeachReg::on_showResultButton_clicked()
+{
+	QList<float> totals;
+	QStringList students;
+	QMap<QString, QString> totalsForSort;
+	QString totalText = htmlGenerator->htmlHead();
+	int i = 0;
+	float midTotal = 0.0;
+	int quelTotal = 0;
+	
+	if(ui->setTypeComboBox->currentIndex() == 0)
+	{
+		totals = manager->getLectureTotals(ui->groupResultComboBox->currentText(), ui->disciplinResultComboBox->currentText());
+		students = manager->getStudentsList(ui->groupResultComboBox->currentText());
+		totalText += htmlGenerator->htmlHeader().arg(ui->disciplinResultComboBox->currentText()).arg(ui->groupResultComboBox->currentText()).arg(QString());
+	}
+	else
+	{
+		totals = manager->getPracticTotals(ui->groupResultComboBox->currentText(), ui->disciplinResultComboBox->currentText(), ui->subgroupResultComboBox->currentText().toInt());
+		students = manager->getStudentsSubgroupList(ui->groupResultComboBox->currentText(), ui->subgroupResultComboBox->currentText().toInt());
+		totalText += htmlGenerator->htmlHeader().arg(ui->disciplinResultComboBox->currentText()).arg(ui->groupResultComboBox->currentText()).arg(ui->subgroupResultComboBox->currentText());
+	}
+	
+	for(i = 0; i < students.count(); i++)
+	{
+		totalsForSort.insert(students.at(i), roundResult(totals.at(i)));
+	}
+	
+	students.sort();
+	totalText += htmlGenerator->tableHead();
+	for(i = 0; i < students.count(); i++)
+	{
+		totalText += htmlGenerator->tableRow().arg(students.at(i)).arg(totalsForSort.value(students.at(i)));
+	}
+	
+	totals.clear();
+	QMapIterator<QString, QString> iter(totalsForSort);
+	while(iter.hasNext())
+	{
+		iter.next();
+		totals.append(iter.value().toFloat());
+	}
+	for(i = 0; i < totals.count(); i++)
+	{
+		midTotal += totals.at(i);
+		if(totals.at(i) < 4.0)
+			quelTotal++;
+	}
+	midTotal /= float(totals.count());
+	
+	totalText += htmlGenerator->htmlEnd().arg(roundResult(midTotal, 1)).arg(roundResult((1 - float(quelTotal) / float(totals.count())) * 100.0, 1));
+	
+	ui->resultTextEdit->setHtml(totalText);
+}
+
+void TeachReg::on_setTypeComboBox_activated(int index)
+{
+	if(index == 1)
+	{
+		ui->subgroupResultComboBox->setVisible(true);
+		setSubgroupsListTotals();
+	}
+	else
+	{
+		ui->subgroupResultComboBox->setVisible(false);
+	}
+}
+
+void TeachReg::on_disciplinResultComboBox_activated(int index)
+{
+	setSubgroupsListTotals();
+}
+
+void TeachReg::on_groupResultComboBox_activated(int index)
+{
+	setSubgroupsListTotals();
+}
+
+void TeachReg::setSubgroupsListTotals()
+{
+	int countSubgroups = manager->getGroupData(ui->groupResultComboBox->currentText()).at(2).toInt();
+	ui->subgroupResultComboBox->clear();
+	for(int i = 0; i < countSubgroups; i++)
+		ui->subgroupResultComboBox->addItem(QString().setNum(i + 1));
 }
 
 #include "teachreg.moc"

@@ -6,11 +6,13 @@
 #include <QtGui/QFileDialog>
 #include <QtGui/QInputDialog>
 #include <QtGui/QMessageBox>
+#include <cmath>
 #include "ui_main_window.h"
 #include "studentlistdialog.h"
 #include "createdbdialog.h"
 #include "teachregmanager.h"
 #include "adddatedialog.h"
+#include "dbase/htmlgenerator.h"
 
 namespace Ui
 {
@@ -55,6 +57,13 @@ private slots:
 	void on_addPracticButton_clicked();
 	void on_practicViewWidget_cellChanged(int row, int column);
 	void on_actionSave_triggered();
+	void on_actionCreate_triggered();
+	void on_actionOpen_triggered();
+	void on_actionAboutQt_triggered();
+	void on_showResultButton_clicked();
+	void on_setTypeComboBox_activated(int index);
+	void on_disciplinResultComboBox_activated(int index);
+	void on_groupResultComboBox_activated(int index);
 	
 private:
 	Ui::MainWindow *ui;
@@ -68,11 +77,14 @@ private:
 	QStringList *ocenkList;
 	bool onChangedLectureView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
 	bool onChangedPracticView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
+	HtmlGenerator *htmlGenerator;
 	
 	void createIcons();
 	void writeSettings();
 	void readSettings();
 	void showGroupData(const QString &groupName);
+	QString roundResult(float num, int pers = 0);
+	void setSubgroupsListTotals();
 };
 
 #endif // teachreg_H

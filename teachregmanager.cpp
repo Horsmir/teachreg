@@ -203,3 +203,17 @@ bool TeachRegManager::saveDB()
 {
 	dbManager->saveDb();
 }
+
+QList< float > TeachRegManager::getLectureTotals(const QString &groupName, const QString &disciplinName) const
+{
+	int groupId = dbManager->getGroupIdByName(groupName);
+	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
+	return dbManager->getLectureTotals(groupId, disciplinId);
+}
+
+QList< float > TeachRegManager::getPracticTotals(const QString &groupName, const QString &disciplinName, int subgroupId) const
+{
+	int groupId = dbManager->getGroupIdByName(groupName);
+	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
+	return dbManager->getPracticTotals(groupId, disciplinId, subgroupId);
+}

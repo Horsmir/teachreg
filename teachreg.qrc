@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/">
+    <file>images/icon.png</file>
+    <file>images/results.png</file>
     <file>images/practics.png</file>
     <file>images/lectures.png</file>
     <file>images/home.png</file>

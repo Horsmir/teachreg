@@ -76,8 +76,7 @@ void Student::calculateLectureTotal(int disciplinId)
 		}
 
 		res /= float(iNum);
-		QString strRes = QString().setNum(res, 'f', 1);
-		lectureTotalMap.insert(disciplinId, strRes);
+		lectureTotalMap.insert(disciplinId, res);
 	}
 }
 
@@ -97,8 +96,7 @@ void Student::calculatePracticTotal(int disciplinId)
 		}
 
 		res /= float(iNum);
-		QString strRes = QString().setNum(res, 'f', 1);
-		practicTotalMap.insert(disciplinId, strRes);
+		practicTotalMap.insert(disciplinId, res);
 	}
 }
 
@@ -107,7 +105,7 @@ QStringList Student::getLectureResults(int disciplinId) const
 	return lectureResultsMap.value(disciplinId);
 }
 
-QString Student::getLectureTotal(int disciplinId) const
+float Student::getLectureTotal(int disciplinId) const
 {
 	return lectureTotalMap.value(disciplinId);
 }
@@ -117,7 +115,7 @@ QStringList Student::getPracticResults(int disciplinId) const
 	return practicResultsMap.value(disciplinId);
 }
 
-QString Student::getPracticTotal(int disciplinId) const
+float Student::getPracticTotal(int disciplinId) const
 {
 	return practicTotalMap.value(disciplinId);
 }
@@ -127,12 +125,12 @@ int Student::getSubgroupId() const
 	return subgroupId;
 }
 
-void Student::setLectureTotal(int disciplinId, const QString &total)
+void Student::setLectureTotal(int disciplinId, float total)
 {
 	lectureTotalMap.insert(disciplinId, total);
 }
 
-void Student::setPracticTotal(int disciplinId, const QString &total)
+void Student::setPracticTotal(int disciplinId, float total)
 {
 	practicTotalMap.insert(disciplinId, total);
 }
@@ -158,7 +156,7 @@ QMap< int, QStringList > Student::getLectureResultsMap() const
 	return lectureResultsMap;
 }
 
-QMap< int, QString > Student::getLectureTotalMap() const
+QMap< int, float > Student::getLectureTotalMap() const
 {
 	return lectureTotalMap;
 }
@@ -168,7 +166,7 @@ QMap< int, QStringList > Student::getPracticResultsMap() const
 	return practicResultsMap;
 }
 
-QMap< int, QString > Student::getPracticTotalMap() const
+QMap< int, float > Student::getPracticTotalMap() const
 {
 	return practicTotalMap;
 }
@@ -178,7 +176,7 @@ void Student::setLectureResultsMap(QMap< int, QStringList > lr)
 	lectureResultsMap = lr;
 }
 
-void Student::setLectureTotalMap(QMap< int, QString > lt)
+void Student::setLectureTotalMap(QMap< int, float > lt)
 {
 	lectureTotalMap = lt;
 }
@@ -188,7 +186,7 @@ void Student::setPracticResultsMap(QMap< int, QStringList > pr)
 	practicResultsMap = pr;
 }
 
-void Student::setPracticTotalMap(QMap< int, QString > pt)
+void Student::setPracticTotalMap(QMap< int, float > pt)
 {
 	practicTotalMap = pt;
 }
@@ -222,8 +220,8 @@ QDataStream &operator>>(QDataStream &in, Student &student)
 	int subgroupId;
 	QMap<int, QStringList> lectureResultsMap;
 	QMap<int, QStringList> practicResultsMap;
-	QMap<int, QString> lectureTotalMap;
-	QMap<int, QString> practicTotalMap;
+	QMap<int, float> lectureTotalMap;
+	QMap<int, float> practicTotalMap;
 
 	in >> name >> subgroupId >> lectureResultsMap >> practicResultsMap >> lectureTotalMap >> practicTotalMap;
 	student.setName(name);

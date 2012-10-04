@@ -65,6 +65,9 @@ public:
 	void repleceLectureResult(int studentId, int disciplinId, int pos, const QString &newResult);
 	void replecepracticResult(int studentId, int disciplinId, int pos, const QString &newResult);
 	
+	QList<float> getLectureTotals(int disciplinId);
+	QList<float> getPracticTotals(int disciplinId, int subgroupId);
+	
 	Group &operator=(const Group &group);
 	
 private:

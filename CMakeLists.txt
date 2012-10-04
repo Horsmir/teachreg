@@ -5,7 +5,7 @@ find_package(Qt4 REQUIRED)
 include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(dbase)
-set(dbase_SRCS dbase/databaseteachreg.cpp dbase/group.cpp dbase/student.cpp)
+set(dbase_SRCS  dbase/htmlgenerator.cpp dbase/databaseteachreg.cpp dbase/group.cpp dbase/student.cpp)
 
 set(teachreg_SRCS ${dbase_SRCS} adddatedialog.cpp databasemanager.cpp createdbdialog.cpp teachregmanager.cpp subgroupsdialog.cpp studentlistdialog.cpp teachreg.cpp main.cpp)
 set(teachreg_UIS main_window.ui studentlistdlg.ui subgroupsdlg.ui createdbdlg.ui adddatedlg.ui)

@@ -316,3 +316,13 @@ QStringList DataBaseManager::getGroupData(int groupId) const
 	ret << gr.getName() << QString().setNum(gr.count()) << QString().setNum(gr.getNumSubgroups());
 	return ret;
 }
+
+QList< float > DataBaseManager::getLectureTotals(int groupId, int disciplinId) const
+{
+	return db->getGroup(groupId).getLectureTotals(disciplinId);
+}
+
+QList< float > DataBaseManager::getPracticTotals(int groupId, int disciplinId, int subgroupId) const
+{
+	return db->getGroup(groupId).getPracticTotals(disciplinId, subgroupId);
+}
