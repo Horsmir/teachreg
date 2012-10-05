@@ -4,9 +4,6 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
 	
-	ui->contentsWidget->setCurrentRow(0);
-	ui->pagesWidget->setCurrentIndex(0);
-	
 	dbFileName = "";
 	dbDateDir = "";
 	
@@ -21,11 +18,18 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	
 	if(!dbFileName.isEmpty())
 	{
-		manager->loadDB(dbFileName);
-		ui->dbFilePathEdit->setText(dbFileName);
-		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
-		ui->label_14->setVisible(false);
-		setWindowTitle("TeachReg - " + dbFileName);
+		if(manager->loadDB(dbFileName))
+		{
+			ui->dbFilePathEdit->setText(dbFileName);
+			ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
+			ui->label_14->setVisible(false);
+			setWindowTitle("TeachReg - " + dbFileName);
+		}
+		else
+		{
+			QMessageBox::warning(this, trUtf8("Загрузка базы данных"), trUtf8("Не возможно загрузить файл ") + dbFileName);
+			dbFileName.clear();
+		}
 	}
 	
 	createIcons();
@@ -44,6 +48,9 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	onChangedPracticView = false;
 	
 	htmlGenerator = new HtmlGenerator(this);
+	
+	ui->contentsWidget->setCurrentRow(currentPageIndex);
+	ui->pagesWidget->setCurrentIndex(currentPageIndex);
 }
 
 TeachReg::~TeachReg()
@@ -151,12 +158,14 @@ void TeachReg::writeSettings()
 {
 	settings->setValue("general/CurrentDBFilePath", dbFileName);
 	settings->setValue("general/CurrentDBDateDir", dbDateDir);
+	settings->setValue("view/LastPage", ui->pagesWidget->currentIndex());
 }
 
 void TeachReg::readSettings()
 {
 	dbFileName = settings->value("general/CurrentDBFilePath", QString()).toString();
 	dbDateDir = settings->value("general/CurrentDBDateDir", QDir::homePath()).toString();
+	currentPageIndex = settings->value("view/LastPage", 0).toInt();
 }
 
 void TeachReg::on_selectDbFilePathButton_clicked()
@@ -342,6 +351,7 @@ void TeachReg::showLecturesTable()
 		}
 		
 	}
+	ui->lectureViewWidget->sortItems(0);
 	onChangedLectureView = true;
 }
 
@@ -415,6 +425,7 @@ void TeachReg::showPracticsTable()
 		}
 		
 	}
+	ui->practicViewWidget->sortItems(0);
 	onChangedPracticView = true;
 }
 
@@ -480,6 +491,8 @@ void TeachReg::on_actionCreate_triggered()
 void TeachReg::on_actionOpen_triggered()
 {
 	on_selectDbFilePathButton_clicked();
+	ui->pagesWidget->setCurrentIndex(0);
+	ui->contentsWidget->setCurrentRow(0);
 }
 
 QString TeachReg::roundResult(float num, int pers)

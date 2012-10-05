@@ -78,6 +78,7 @@ private:
 	bool onChangedLectureView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
 	bool onChangedPracticView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
 	HtmlGenerator *htmlGenerator;
+	int currentPageIndex;
 	
 	void createIcons();
 	void writeSettings();
