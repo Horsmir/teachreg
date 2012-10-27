@@ -13,6 +13,7 @@
 #include "teachregmanager.h"
 #include "adddatedialog.h"
 #include "dbase/htmlgenerator.h"
+#include "help_browser/helpbrowser.h"
 
 namespace Ui
 {
@@ -64,6 +65,7 @@ private slots:
 	void on_setTypeComboBox_activated(int index);
 	void on_disciplinResultComboBox_activated(int index);
 	void on_groupResultComboBox_activated(int index);
+	void on_actionHelp_triggered();
 	
 private:
 	Ui::MainWindow *ui;
@@ -79,6 +81,7 @@ private:
 	bool onChangedPracticView;	// флаг запрета изменения ячейки false - не изменять, true - изменять можно
 	HtmlGenerator *htmlGenerator;
 	int currentPageIndex;
+	QString docDir;
 	
 	void createIcons();
 	void writeSettings();

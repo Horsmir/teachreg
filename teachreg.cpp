@@ -158,6 +158,7 @@ void TeachReg::writeSettings()
 {
 	settings->setValue("general/CurrentDBFilePath", dbFileName);
 	settings->setValue("general/CurrentDBDateDir", dbDateDir);
+	settings->setValue("general/docDir", docDir);
 	settings->setValue("view/LastPage", ui->pagesWidget->currentIndex());
 }
 
@@ -165,6 +166,7 @@ void TeachReg::readSettings()
 {
 	dbFileName = settings->value("general/CurrentDBFilePath", QString()).toString();
 	dbDateDir = settings->value("general/CurrentDBDateDir", QDir::homePath()).toString();
+	docDir = settings->value("general/docDir", QApplication::applicationDirPath() + "/../doc").toString();
 	currentPageIndex = settings->value("view/LastPage", 0).toInt();
 }
 
@@ -586,6 +588,11 @@ void TeachReg::setSubgroupsListTotals()
 	ui->subgroupResultComboBox->clear();
 	for(int i = 0; i < countSubgroups; i++)
 		ui->subgroupResultComboBox->addItem(QString().setNum(i + 1));
+}
+
+void TeachReg::on_actionHelp_triggered()
+{
+	HelpBrowser::showPage(docDir, "1.html");
 }
 
 #include "teachreg.moc"
