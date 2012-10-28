@@ -40,7 +40,7 @@ public:
 	virtual ~StudentListDialog();
 	
 	void setManager(TeachRegManager *tmanager);
-	void setGroupName(const QString &groupName);
+	void setGroupName(int groupId);
 	
 public slots:
 	void on_subgroupsButton_clicked();
@@ -52,7 +52,7 @@ private:
 	Ui::StudentListDlg *ui;
 	SubgroupsDialog *subgroupDlg;
 	TeachRegManager *manager;
-	QString groupName;
+	int groupId;
 	
 	void setStudentList();
 };

@@ -218,6 +218,21 @@ void DataBaseTeachReg::editPracticResult(int groupId, int disciplinId, const QSt
 	getGroupPtr(groupId)->replecepracticResult(studentId, disciplinId, pos, newResult);
 }
 
+void DataBaseTeachReg::delDisciplin(int disciplinId)
+{
+	//TODO
+}
+
+void DataBaseTeachReg::delGroup(int groupId)
+{
+	//TODO
+}
+
+void DataBaseTeachReg::delStudent(int groupId, int studentId)
+{
+	//TODO
+}
+
 //-----------------------------------------------------------------------------------
 QDataStream &operator<<(QDataStream &out, const DataBaseTeachReg &db)
 {

@@ -22,7 +22,9 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
-#include "databasemanager.h"
+#include <QtCore/QFile>
+#include <QtGui/QComboBox>
+#include "dbase/databaseteachreg.h"
 
 const QString SEPAR = "|";
 
@@ -32,45 +34,46 @@ public:
 	explicit TeachRegManager(QObject *parent = 0);
 	virtual ~TeachRegManager();
 	
-	bool loadDB(const QString &dbFilePath);
+	bool loadDB(const QString &filePath);
 	QString getAboutDB() const;
 	bool createDB(const QString &dbFilePath, const QString &aboutString);
-	bool saveDB();
 	
 	QStringList getDisciplinsList() const;
 	void addDisciplin(const QString &disciplinName);
-	bool editDisciplin(const QString &oldDisciplinName, const QString &newDisciplinName);
-	bool delDisciplin(const QString &disciplinName);
+	bool editDisciplin(int oldDisciplinId, const QString &newDisciplinName);
+	bool delDisciplin(int disciplinId);
 	
 	QStringList getGroupsNamesList() const;
 	QList<QStringList> getGroupsList() const;
-	QStringList getGroupData(const QString &groupName) const;
-	QStringList getStudentsList(const QString &groupName) const;
-	QStringList getStudentsSubgroupList(const QString &groupName, quint32 numSubgroup) const;
+	QStringList getGroupData(int groupId) const;
+	QStringList getStudentsList(int groupId, int subgroupId = 0) const;
 	void addGroup(const QString &groupName);
-	void editGroup(const QString &oldGroupName, const QString &newGroupName);
-	void editGroupNumSubgroups(const QString &groupName, quint32 numSubgroup);
-	void delGroup(const QString &oldGroupName);
-	void changeSubgroup(const QString &groupName, quint32 numSubgroup, const QString &studentName);
-	void addStudentName(const QString &studentName, const QString &groupName);
-	void editStudentName(const QString &groupName, const QString &oldStudentName, const QString &newStudentName);
+	void editGroup(int oldGroupId, const QString &newGroupName);
+	void editGroupNumSubgroups(int groupId, quint32 numSubgroup);
+	void delGroup(int groupId);
+	void changeSubgroup(int groupId, quint32 numSubgroup, const QString &studentName);
+	void addStudentName(const QString &studentName, int groupId);
+	void editStudentName(int groupId, const QString &oldStudentName, const QString &newStudentName);
 	void delStudent(const QString &studentName);
 	
-	QStringList getLecturesDateList(const QString &groupName, const QString &disciplinName) const;
-	QStringList getPracticsDateList(const QString &groupName, const QString &disciplinName, quint32 numSubgroup) const;
-	void addLecture(const QString &groupName, const QString &disciplinName, const QString &date);
-	void addPractic(const QString &groupName, const QString &disciplinName, quint32 numSubgroup, const QString &date);
+	void addLecture(int groupId, int disciplinId, const QString &date);
+	void addPractic(int groupId, int disciplinId, quint32 numSubgroup, const QString &date);
 	
-	QStringList getLecturesResultList(const QString &groupName, const QString &disciplinNam, const QString &studentName) const;
-	QStringList getPracticsResultList(const QString &groupName, const QString &disciplinNam, quint32 numSubgroup, const QString &studentName) const;
-	void addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result);
-	void addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result);
+	QList<float> getLectureTotals(int groupId, int disciplinId) const;
+	QList<float> getPracticTotals(int groupId, int disciplinId, int subgroupId) const;
 	
-	QList<float> getLectureTotals(const QString &groupName, const QString &disciplinName) const;
-	QList<float> getPracticTotals(const QString &groupName, const QString &disciplinName, int subgroupId) const;
+	void setDisciplinView(QComboBox *dcb);
+	void setGroupView(QComboBox *gcb);
+	void setSubgroupView(QComboBox *scb, int groupId);
+	
+	DataBaseTeachReg *getDb();
+	bool saveDb();
 	
 private:
-	DataBaseManager *dbManager;
+	//DataBaseManager *dbManager;
+	DataBaseTeachReg *db;
+	QString dbFilePath;
+	quint32 magicNumber;
 };
 
 #endif // TEACHREGMANAGER_H

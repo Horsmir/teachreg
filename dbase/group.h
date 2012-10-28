@@ -52,6 +52,7 @@ public:
 	Student *getStudentPtr(int studentId);
 	int getStudentIdByName(const QString &studentName);
 	int count() const;
+	int countInSubgroup(int subgroupId) const;
 	
 	QMap<int, QStringList> getLectureDates() const;
 	QMap<int, QStringList> getPracticDates() const;

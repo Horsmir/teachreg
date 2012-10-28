@@ -36,14 +36,6 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	ui->subgroupResultComboBox->setVisible(false);
 	ui->label_20->setVisible(false);
 	
-	ocenkList = new QStringList;
-	ocenkList->append("");
-	ocenkList->append(trUtf8("нб"));
-	ocenkList->append("2");
-	ocenkList->append("3");
-	ocenkList->append("4");
-	ocenkList->append("5");
-	
 	onChangedLectureView = false;
 	onChangedPracticView = false;
 	
@@ -51,12 +43,16 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	
 	ui->contentsWidget->setCurrentRow(currentPageIndex);
 	ui->pagesWidget->setCurrentIndex(currentPageIndex);
+	
+	lecPracModel = new TeachModel(this);
+	lecPracModel->setTeachDb(manager->getDb());
+	ui->lectureViewWidget->setModel(lecPracModel);
+	ui->practicViewWidget->setModel(lecPracModel);
 }
 
 TeachReg::~TeachReg()
 {
 	delete ui;
-	delete ocenkList;
 }
 
 void TeachReg::createIcons()
@@ -112,15 +108,15 @@ void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QL
 		case 3:
 			ui->groupComboBox->clear();
 			ui->disciplinComboBox->clear();
-			ui->groupComboBox->addItems(manager->getGroupsNamesList());
-			ui->disciplinComboBox->addItems(manager->getDisciplinsList());
+			manager->setDisciplinView(ui->disciplinComboBox);
+			manager->setGroupView(ui->groupComboBox);
 			showLecturesTable();
 			break;
 		case 4:
 			ui->practicGroupComboBox->clear();
 			ui->practicDisciplinComboBox->clear();
-			ui->practicGroupComboBox->addItems(manager->getGroupsNamesList());
-			ui->practicDisciplinComboBox->addItems(manager->getDisciplinsList());
+			manager->setDisciplinView(ui->practicDisciplinComboBox);
+			manager->setGroupView(ui->practicGroupComboBox);
 			on_practicGroupComboBox_activated(0);
 			break;
 		case 5:
@@ -136,7 +132,7 @@ void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QL
 
 void TeachReg::on_studentListButton_clicked()
 {
-	dlgStudents->setGroupName(ui->viewGroupsWidget->currentItem()->text());
+	dlgStudents->setGroupName(ui->viewGroupsWidget->currentItem()->data(Qt::UserRole).toInt());
 	dlgStudents->setManager(manager);
 	dlgStudents->show();
 }
@@ -212,12 +208,12 @@ void TeachReg::on_addDisciplinButton_clicked()
 
 void TeachReg::on_editDisciplinButton_clicked()
 {
-	QString curDisciplin = ui->viewDisciplinsWidget->currentItem()->text();
+	int curDisciplin = ui->viewDisciplinsWidget->currentItem()->data(Qt::UserRole).toInt();
 	bool ok;
 	
 	QString text = QInputDialog::getText(this, trUtf8("Изменить дисциплину"),
 												  trUtf8("Название:"), QLineEdit::Normal,
-												  curDisciplin, &ok);
+												  ui->viewDisciplinsWidget->currentItem()->text(), &ok);
 	if (ok && !text.isEmpty())
 	{
 		manager->editDisciplin(curDisciplin, text);
@@ -227,7 +223,7 @@ void TeachReg::on_editDisciplinButton_clicked()
 
 void TeachReg::on_delDisciplinButton_clicked()
 {
-	QString curDisciplin = ui->viewDisciplinsWidget->currentItem()->text();
+	int curDisciplin = ui->viewDisciplinsWidget->currentItem()->data(Qt::UserRole).toInt();
 	QMessageBox::StandardButton reply;
 	reply = QMessageBox::question(this, trUtf8("Удаление дисциплины"), QString(trUtf8("Удалить дисциплину \"") + curDisciplin + "\"?"), QMessageBox::Yes | QMessageBox::No);
 	if (reply == QMessageBox::Yes)
@@ -239,7 +235,7 @@ void TeachReg::on_delDisciplinButton_clicked()
 
 void TeachReg::closeEvent(QCloseEvent *event)
 {
-	manager->saveDB();
+	manager->saveDb();
 	writeSettings();
 	QWidget::closeEvent(event);
 }
@@ -261,14 +257,21 @@ void TeachReg::showGroupslinList()
 	ui->viewGroupsWidget->clear();
 	
 	QStringList groups = manager->getGroupsNamesList();
-	ui->viewGroupsWidget->addItems(groups);
+	for(int i = 0; i < groups.count(); i++)
+	{
+		QListWidgetItem *item = new QListWidgetItem;
+		item->setText(groups.at(i));
+		item->setData(Qt::UserRole, i);
+		ui->viewGroupsWidget->addItem(item);
+	}
+	
 	ui->viewGroupsWidget->sortItems();
 	ui->viewGroupsWidget->setCurrentItem(0);
 }
 
-void TeachReg::showGroupData(const QString &groupName)
+void TeachReg::showGroupData(int groupId)
 {
-	QStringList groupData = manager->getGroupData(groupName);
+	QStringList groupData = manager->getGroupData(groupId);
 	ui->groupNameEdit->setText(groupData.at(0));
 	ui->labelNumStudents->setText(groupData.at(1));
 	ui->labelNumSubGroups->setText(groupData.at(2));
@@ -279,7 +282,7 @@ void TeachReg::on_viewGroupsWidget_currentItemChanged(QListWidgetItem *current, 
 	if(!current)
 		current = previous;
 	
-	QString curGroupName = current->text();
+	int curGroupName = current->data(Qt::UserRole).toInt();
 	showGroupData(curGroupName);
 }
 
@@ -295,7 +298,7 @@ void TeachReg::on_editGroupButton_clicked()
 
 void TeachReg::on_setEditGroupButton_clicked()
 {
-	manager->editGroup(ui->viewGroupsWidget->currentItem()->text(), ui->groupNameEdit->text());
+	manager->editGroup(ui->viewGroupsWidget->currentItem()->data(Qt::UserRole).toInt(), ui->groupNameEdit->text());
 	ui->setEditGroupButton->setDisabled(true);
 	showGroupslinList();
 }
@@ -308,7 +311,7 @@ void TeachReg::on_delGroupButton_clicked()
 		return;
 	}
 	
-	QString curGroupName = ui->viewGroupsWidget->currentItem()->text();
+	int curGroupName = ui->viewGroupsWidget->currentItem()->data(Qt::UserRole).toInt();
 	QMessageBox::StandardButton reply;
 	reply = QMessageBox::question(this, trUtf8("Удаление группы"), QString(trUtf8("Удалить группу \"") + curGroupName + "\"?"), QMessageBox::Yes | QMessageBox::No);
 	if (reply == QMessageBox::Yes)
@@ -321,39 +324,13 @@ void TeachReg::on_delGroupButton_clicked()
 void TeachReg::showLecturesTable()
 {
 	onChangedLectureView = false;
-	ui->lectureViewWidget->clear();
-	QString curGroupName = ui->groupComboBox->currentText();
-	QString curDisciplin = ui->disciplinComboBox->currentText();
 	
-	QStringList dates;
-	dates << trUtf8("Ф.И. студента");
-	dates.append( manager->getLecturesDateList(curGroupName, curDisciplin));
+	int curGroupName = ui->groupComboBox->itemData(ui->groupComboBox->currentIndex()).toInt();
+	int curDisciplin = ui->disciplinComboBox->itemData(ui->disciplinComboBox->currentIndex()).toInt();
 	
-	QStringList sts = manager->getStudentsList(curGroupName);
+	lecPracModel->setDataForQuest(curDisciplin, curGroupName);
+	ui->lectureViewWidget->sortByColumn(0, Qt::AscendingOrder);
 	
-	int datesCount = dates.count();
-	int studentsCount = sts.count();
-	
-	ui->lectureViewWidget->setColumnCount(datesCount);
-	ui->lectureViewWidget->setRowCount(studentsCount);
-	ui->lectureViewWidget->setHorizontalHeaderLabels(dates);
-	for(int i = 0; i < studentsCount; i++)
-	{
-		ui->lectureViewWidget->setItem(i, 0, new QTableWidgetItem(sts.at(i)));
-	}
-	
-	for(int i = 0; i < studentsCount; i++)
-	{
-		QStringList results = manager->getLecturesResultList(curGroupName, curDisciplin, sts.at(i));
-		if(results.isEmpty())
-			break;
-		for(int j = 0; j < results.count(); j++)
-		{
-			ui->lectureViewWidget->setItem(i, j + 1, new QTableWidgetItem(ocenkList->at(results.at(j).toInt())));
-		}
-		
-	}
-	ui->lectureViewWidget->sortItems(0);
 	onChangedLectureView = true;
 }
 
@@ -361,24 +338,9 @@ void TeachReg::on_addLectureButton_clicked()
 {
 	if(dlgAddDate->exec() == QDialog::Accepted)
 	{
-		manager->addLecture(ui->groupComboBox->currentText(), ui->disciplinComboBox->currentText(), dlgAddDate->getDate());
+		manager->addLecture(ui->groupComboBox->itemData(ui->groupComboBox->currentIndex()).toInt(), ui->disciplinComboBox->itemData(ui->disciplinComboBox->currentIndex()).toInt(), dlgAddDate->getDate());
 		showLecturesTable();
 	}
-}
-
-void TeachReg::on_lectureViewWidget_cellChanged(int row, int column)
-{
-	if(!onChangedLectureView)
-		return;
-	QString studentName = ui->lectureViewWidget->item(row, 0)->text();
-	int posDate = column - 1;
-	QString result = ui->lectureViewWidget->item(row, column)->text();
-	
-	int ocencId = ocenkList->indexOf(result);
-	if(ocencId == -1)
-		ocencId = 0;
-	
-	manager->addLectureResult(ui->groupComboBox->currentText(), ui->disciplinComboBox->currentText(), studentName, posDate, QString().setNum(ocencId));
 }
 
 void TeachReg::on_disciplinComboBox_activated(int index)
@@ -395,48 +357,19 @@ void TeachReg::showPracticsTable()
 {
 	onChangedPracticView = false;
 	
-	QString curGroupName = ui->practicGroupComboBox->currentText();
-	QString curDisciplinName = ui->practicDisciplinComboBox->currentText();
-	int curSubgroup = ui->subgroupComboBox->currentText().toInt();
+	int curGroupName = ui->practicGroupComboBox->itemData(ui->practicGroupComboBox->currentIndex()).toInt();
+	int curDisciplinName = ui->practicDisciplinComboBox->itemData(ui->practicDisciplinComboBox->currentIndex()).toInt();
+	int curSubgroup = ui->subgroupComboBox->itemData(ui->subgroupComboBox->currentIndex()).toInt();
 	
-	QStringList dates;
-	dates << trUtf8("Ф.И. студента");
-	dates.append(manager->getPracticsDateList(curGroupName, curDisciplinName, curSubgroup));
+	lecPracModel->setDataForQuest(curDisciplinName, curGroupName, curSubgroup);
 	
-	QStringList sts = manager->getStudentsSubgroupList(curGroupName, curSubgroup);
-	
-	int datesCount = dates.count();
-	int studentsCount = sts.count();
-	
-	ui->practicViewWidget->setColumnCount(datesCount);
-	ui->practicViewWidget->setRowCount(studentsCount);
-	ui->practicViewWidget->setHorizontalHeaderLabels(dates);
-	for(int i = 0; i < studentsCount; i++)
-	{
-		ui->practicViewWidget->setItem(i, 0, new QTableWidgetItem(sts.at(i)));
-	}
-	
-	for(int i = 0; i < studentsCount; i++)
-	{
-		QStringList results = manager->getPracticsResultList(curGroupName, curDisciplinName, curSubgroup, sts.at(i));
-		if(results.isEmpty())
-			break;
-		for(int j = 0; j < results.count(); j++)
-		{
-			ui->practicViewWidget->setItem(i, j + 1, new QTableWidgetItem(ocenkList->at(results.at(j).toInt())));
-		}
-		
-	}
-	ui->practicViewWidget->sortItems(0);
 	onChangedPracticView = true;
 }
 
 void TeachReg::on_practicGroupComboBox_activated(int index)
 {
-	int countSubgroups = manager->getGroupData(ui->practicGroupComboBox->currentText()).at(2).toInt();
 	ui->subgroupComboBox->clear();
-	for(int i = 0; i < countSubgroups; i++)
-		ui->subgroupComboBox->addItem(QString().setNum(i + 1));
+	manager->setSubgroupView(ui->subgroupComboBox, ui->practicGroupComboBox->itemData(index).toInt());
 	showPracticsTable();
 }
 
@@ -454,30 +387,14 @@ void TeachReg::on_addPracticButton_clicked()
 {
 	if(dlgAddDate->exec() == QDialog::Accepted)
 	{
-		manager->addPractic(ui->practicGroupComboBox->currentText(), ui->practicDisciplinComboBox->currentText(), ui->subgroupComboBox->currentText().toInt(), dlgAddDate->getDate());
+		manager->addPractic(ui->practicGroupComboBox->itemData(ui->practicGroupComboBox->currentIndex()).toInt(), ui->practicDisciplinComboBox->itemData(ui->practicDisciplinComboBox->currentIndex()).toInt(), ui->subgroupComboBox->currentText().toInt(), dlgAddDate->getDate());
 		showPracticsTable();
 	}
 }
 
-void TeachReg::on_practicViewWidget_cellChanged(int row, int column)
-{
-	if(!onChangedPracticView)
-		return;
-	
-	QString studentName = ui->practicViewWidget->item(row, 0)->text();
-	int posDate = column - 1;
-	QString result = ui->practicViewWidget->item(row, column)->text();
-	
-	int ocencId = ocenkList->indexOf(result);
-	if(ocencId == -1)
-		ocencId = 0;
-	
-	manager->addPracticResult(ui->practicGroupComboBox->currentText(), ui->practicDisciplinComboBox->currentText(), studentName, posDate, QString().setNum(ocencId));
-}
-
 void TeachReg::on_actionSave_triggered()
 {
-	manager->saveDB();
+	manager->saveDb();
 }
 
 void TeachReg::on_actionAboutQt_triggered()
@@ -516,14 +433,14 @@ void TeachReg::on_showResultButton_clicked()
 	
 	if(ui->setTypeComboBox->currentIndex() == 0)
 	{
-		totals = manager->getLectureTotals(ui->groupResultComboBox->currentText(), ui->disciplinResultComboBox->currentText());
-		students = manager->getStudentsList(ui->groupResultComboBox->currentText());
+		totals = manager->getLectureTotals(ui->groupResultComboBox->itemData(ui->groupResultComboBox->currentIndex()).toInt(), ui->disciplinResultComboBox->itemData(ui->disciplinResultComboBox->currentIndex()).toInt());
+		students = manager->getStudentsList(ui->groupResultComboBox->itemData(ui->groupResultComboBox->currentIndex()).toInt());
 		totalText += htmlGenerator->htmlHeader().arg(ui->disciplinResultComboBox->currentText()).arg(ui->groupResultComboBox->currentText()).arg(QString());
 	}
 	else
 	{
-		totals = manager->getPracticTotals(ui->groupResultComboBox->currentText(), ui->disciplinResultComboBox->currentText(), ui->subgroupResultComboBox->currentText().toInt());
-		students = manager->getStudentsSubgroupList(ui->groupResultComboBox->currentText(), ui->subgroupResultComboBox->currentText().toInt());
+		totals = manager->getPracticTotals(ui->groupResultComboBox->itemData(ui->groupResultComboBox->currentIndex()).toInt(), ui->disciplinResultComboBox->itemData(ui->disciplinResultComboBox->currentIndex()).toInt(), ui->subgroupResultComboBox->currentText().toInt());
+		students = manager->getStudentsList(ui->groupResultComboBox->itemData(ui->groupResultComboBox->currentIndex()).toInt(), ui->subgroupResultComboBox->currentText().toInt());
 		totalText += htmlGenerator->htmlHeader().arg(ui->disciplinResultComboBox->currentText()).arg(ui->groupResultComboBox->currentText()).arg(ui->subgroupResultComboBox->currentText());
 	}
 	
@@ -584,7 +501,7 @@ void TeachReg::on_groupResultComboBox_activated(int index)
 
 void TeachReg::setSubgroupsListTotals()
 {
-	int countSubgroups = manager->getGroupData(ui->groupResultComboBox->currentText()).at(2).toInt();
+	int countSubgroups = manager->getGroupData(ui->groupResultComboBox->itemData(ui->groupResultComboBox->currentIndex()).toInt()).at(2).toInt();
 	ui->subgroupResultComboBox->clear();
 	for(int i = 0; i < countSubgroups; i++)
 		ui->subgroupResultComboBox->addItem(QString().setNum(i + 1));

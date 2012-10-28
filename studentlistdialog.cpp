@@ -25,7 +25,7 @@ StudentListDialog::StudentListDialog(QWidget *parent, Qt::WindowFlags f): QDialo
 	
 	subgroupDlg = new SubgroupsDialog(this);
 	manager = 0;
-	groupName = "";
+	groupId = -1;
 }
 
 StudentListDialog::~StudentListDialog()
@@ -35,7 +35,7 @@ StudentListDialog::~StudentListDialog()
 
 void StudentListDialog::on_subgroupsButton_clicked()
 {
-	subgroupDlg->setGroupName(groupName);
+	subgroupDlg->setGroupName(groupId);
 	subgroupDlg->setTeachregManager(manager);
 	subgroupDlg->show();
 }
@@ -46,7 +46,7 @@ void StudentListDialog::setStudentList()
 	
 	if(manager)
 	{
-		studentList = manager->getStudentsList(groupName);
+		studentList = manager->getStudentsList(groupId);
 	
 		ui->listStudentsWidget->clear();
 		ui->listStudentsWidget->addItems(studentList);
@@ -60,9 +60,9 @@ void StudentListDialog::setManager(TeachRegManager *tmanager)
 	setStudentList();
 }
 
-void StudentListDialog::setGroupName(const QString &groupName)
+void StudentListDialog::setGroupName(int groupId)
 {
-	this->groupName = groupName;
+	this->groupId = groupId;
 }
 
 void StudentListDialog::on_addStudentButton_clicked()
@@ -72,7 +72,7 @@ void StudentListDialog::on_addStudentButton_clicked()
 	QString text = QInputDialog::getText(this, trUtf8("Добавить студента"), trUtf8("Фамилия Имя:"), QLineEdit::Normal, QString(), &ok);
 	if(ok && !text.isEmpty())
 	{
-		manager->addStudentName(text, groupName);
+		manager->addStudentName(text, groupId);
 		setStudentList();
 	}
 }
@@ -91,7 +91,7 @@ void StudentListDialog::on_editStudentButton_clicked()
 	QString text = QInputDialog::getText(this, trUtf8("Изменить студента"), trUtf8("Фамилия Имя:"), QLineEdit::Normal, curStudentName, &ok);
 	if(ok && !text.isEmpty())
 	{
-		manager->editStudentName(groupName, curStudentName, text);
+		manager->editStudentName(groupId, curStudentName, text);
 		setStudentList();
 	}
 }

@@ -216,6 +216,18 @@ QList< float > Group::getPracticTotals(int disciplinId, int subgroupId)
 	return ret;
 }
 
+int Group::countInSubgroup(int subgroupId) const
+{
+	int stl = 0;
+	QListIterator<Student> itr(studentList);
+	while(itr.hasNext())
+	{
+		if(itr.next().getSubgroupId() == subgroupId)
+			stl++;
+	}
+	return stl;
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 
 QDataStream &operator<<(QDataStream &out, const Group &gr)

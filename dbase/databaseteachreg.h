@@ -64,6 +64,10 @@ public:
 	void editLectureResult(int groupId, int disciplinId, const QString &studentName, int pos, const QString &newResult);
 	void editPracticResult(int groupId, int disciplinId, const QString &studentName, int pos, const QString &newResult);
 	
+	void delDisciplin(int disciplinId);
+	void delGroup(int groupId);
+	void delStudent(int groupId, int studentId);
+	
 	DataBaseTeachReg &operator=(const DataBaseTeachReg &db);
 	
 private:

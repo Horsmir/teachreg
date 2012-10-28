@@ -41,7 +41,7 @@ public:
 	virtual ~SubgroupsDialog();
 	
 	void setTeachregManager(TeachRegManager *manager);
-	void setGroupName(const QString &groupName);
+	void setGroupName(int groupId);
 	
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -53,7 +53,7 @@ private slots:
 private:
 	Ui::SubgroupsDlg *ui;
 	TeachRegManager *manager;
-	QString groupName;
+	int groupId;
 	QListWidget *listSubgroups[MAX_NUM_SUBGROUPS];
 	QLabel *subgroupLabels[MAX_NUM_SUBGROUPS];
 	quint32 curNamSubgroup;

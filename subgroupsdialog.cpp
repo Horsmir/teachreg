@@ -47,9 +47,9 @@ void SubgroupsDialog::closeEvent(QCloseEvent *event)
 	QDialog::closeEvent(event);
 }
 
-void SubgroupsDialog::setGroupName(const QString &groupName)
+void SubgroupsDialog::setGroupName(int groupId)
 {
-	this->groupName = groupName;
+	this->groupId = groupId;
 }
 
 void SubgroupsDialog::setTeachregManager(TeachRegManager *manager)
@@ -60,14 +60,14 @@ void SubgroupsDialog::setTeachregManager(TeachRegManager *manager)
 
 void SubgroupsDialog::setSubgroups()
 {
-	int numSubgroups = manager->getGroupData(groupName).at(2).toInt();
+	int numSubgroups = manager->getGroupData(groupId).at(2).toInt();
 	if(!numSubgroups)
-		ui->subgroupsWidget1->addItems(manager->getStudentsList(groupName));
+		ui->subgroupsWidget1->addItems(manager->getStudentsList(groupId));
 	else
 	{
 		for(int i = 0; i < numSubgroups; i++)
 		{
-			listSubgroups[i]->addItems(manager->getStudentsSubgroupList(groupName, i + 1));
+			listSubgroups[i]->addItems(manager->getStudentsList(groupId, i + 1));
 			listSubgroups[i]->setVisible(true);
 			subgroupLabels[i]->setVisible(true);
 		}
@@ -102,11 +102,11 @@ void SubgroupsDialog::clearAll()
 
 void SubgroupsDialog::on_okButton_clicked()
 {
-	manager->editGroupNumSubgroups(groupName, curNamSubgroup);
+	manager->editGroupNumSubgroups(groupId, curNamSubgroup);
 	for(int i = 0; i < curNamSubgroup; i++)
 	{
 		for(int j = 0; j < listSubgroups[i]->count(); j++)
-			manager->changeSubgroup(groupName, i + 1, listSubgroups[i]->item(j)->text());
+			manager->changeSubgroup(groupId, i + 1, listSubgroups[i]->item(j)->text());
 	}
 	close();
 }

@@ -21,7 +21,8 @@
 
 TeachRegManager::TeachRegManager(QObject *parent): QObject(parent)
 {
-	dbManager = new DataBaseManager(this);
+	dbFilePath = "default.dbtr";
+	magicNumber = 0xAAFF452D;
 }
 
 TeachRegManager::~TeachRegManager()
@@ -29,107 +30,173 @@ TeachRegManager::~TeachRegManager()
 
 }
 
-bool TeachRegManager::loadDB(const QString &dbFilePath)
+bool TeachRegManager::loadDB(const QString &filePath)
 {
-	return dbManager->openDb(dbFilePath);
+	quint32 magic;
+	quint16 streamVersion;
+	
+	if(db)
+	{
+		if(!saveDb())
+			return false;
+		delete db;
+		db = 0;
+	}
+	dbFilePath = filePath;
+	
+	QFile dbFile(dbFilePath);
+	if(!dbFile.exists())
+	{
+		qDebug() << "DataBase file " << dbFilePath << " no exist.";
+		return false;
+	}
+	if(!dbFile.open(QIODevice::ReadOnly))
+	{
+		qDebug() << "Can not open file " << dbFilePath << " for reading. Error: " << dbFile.errorString();
+		return false;
+	}
+	
+	QDataStream in(&dbFile);
+	in >> magic >> streamVersion;
+	if(magic != magicNumber)
+	{
+		qDebug() << "ERROR: File is not recognized by this application";
+		return false;
+	}
+	else if(streamVersion > in.version())
+	{
+		qDebug() << "ERROR: File is from a more recent version of the application";
+		return false;
+	}
+	
+	db = new DataBaseTeachReg(this);
+	in >> *db;
+	return true;
 }
 
 QString TeachRegManager::getAboutDB() const
 {
-	return dbManager->getAboutDb();
+	return db->getDescription();
 }
 
 bool TeachRegManager::createDB(const QString &dbFilePath, const QString &aboutString)
 {
-	if(!dbManager->createDb(aboutString))
-		return false;
-	dbManager->setDbFilePath(dbFilePath);
+	this->dbFilePath = dbFilePath;
+	if(db)
+	{
+		if(!saveDb())
+			return false;
+		delete db;
+		db = 0;
+	}
+	db = new DataBaseTeachReg(this);
+	db->setDescription(aboutString);
 	return true;
 }
 
 QStringList TeachRegManager::getDisciplinsList() const
 {
-	return dbManager->getDisciplinList();
+	return db->getDisciplinList();
 }
 
 void TeachRegManager::addDisciplin(const QString &disciplinName)
 {
-	dbManager->addDisciplin(disciplinName);
+	db->addDisciplin(disciplinName);
 }
 
-bool TeachRegManager::editDisciplin(const QString &oldDisciplinName, const QString &newDisciplinName)
+bool TeachRegManager::editDisciplin(int oldDisciplinId, const QString &newDisciplinName)
 {
-	int disciplinId = dbManager->getDisciplinIdByName(oldDisciplinName);
-	dbManager->editDisciplin(disciplinId, newDisciplinName);
+	db->editDisciplin(oldDisciplinId, newDisciplinName);
 	return true;
 }
 
-bool TeachRegManager::delDisciplin(const QString &disciplinName)
+bool TeachRegManager::delDisciplin(int disciplinId)
 {
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	dbManager->delDisciplin(disciplinId);
+	db->delDisciplin(disciplinId);
 }
 
 QList< QStringList > TeachRegManager::getGroupsList() const
 {
-	return dbManager->getGroupsList();
+	QList<QStringList> ret;
+	for(int i = 0; i < db->countGroups(); i++)
+	{
+		QStringList group;
+		Group gr = db->getGroup(i);
+		group << gr.getName() << QString().setNum(gr.count()) << QString().setNum(gr.getNumSubgroups());
+		ret << group;
+	}
+	return ret;
 }
 
 QStringList TeachRegManager::getGroupsNamesList() const
 {
-	return dbManager->getGroupNamesList();
+	QStringList ret;
+	for(int i = 0; i < db->countGroups(); i++)
+		ret << db->getGroup(i).getName();
+	return ret;
 }
 
-QStringList TeachRegManager::getStudentsList(const QString &groupName) const
+QStringList TeachRegManager::getStudentsList(int groupId, int subgroupId) const
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	return dbManager->getStudentList(groupId);
-}
-
-QStringList TeachRegManager::getStudentsSubgroupList(const QString &groupName, quint32 numSubgroup) const
-{
-	int groupId = dbManager->getGroupIdByName(groupName);
-	return dbManager->getStudentList(groupId, numSubgroup);
+	QStringList ret;
+	Group gr = db->getGroup(groupId);
+	if(subgroupId == 0)
+		for(int i = 0; i < gr.count(); i++)
+		{
+			ret << gr.getStudent(i).getName();
+		}
+		else
+			for(int i = 0; i < gr.count(); i++)
+			{
+				if(gr.getStudent(i).getSubgroupId() == subgroupId)
+					ret << gr.getStudent(i).getName();
+			}
+			
+			return ret;
 }
 
 void TeachRegManager::addGroup(const QString &groupName)
 {
-	dbManager->addGroup(groupName);
+	Group gr;
+	gr.setParent(db);
+	gr.setName(groupName);
+	db->addGroup(gr);
 }
 
-void TeachRegManager::editGroup(const QString &oldGroupName, const QString &newGroupName)
+void TeachRegManager::editGroup(int oldGroupId, const QString &newGroupName)
 {
-	dbManager->editGroup(oldGroupName, newGroupName);
+	db->getGroupPtr(oldGroupId)->setName(newGroupName);
 }
 
-void TeachRegManager::editGroupNumSubgroups(const QString &groupName, quint32 numSubgroup)
+void TeachRegManager::editGroupNumSubgroups(int groupId, quint32 numSubgroup)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	dbManager->editNumSubgroupInGroups(groupId, numSubgroup);
+	db->getGroupPtr(groupId)->setNumSubgroups(numSubgroup);
 }
 
-void TeachRegManager::delGroup(const QString &oldGroupName)
+void TeachRegManager::delGroup(int groupId)
 {
-	int groupId = dbManager->getGroupIdByName(oldGroupName);
-	dbManager->delGroup(groupId);
+	db->delGroup(groupId);
 }
 
-void TeachRegManager::changeSubgroup(const QString &groupName, quint32 numSubgroup, const QString &studentName)
+void TeachRegManager::changeSubgroup(int groupId, quint32 numSubgroup, const QString &studentName)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	dbManager->setNumSubgroupForStudent(groupId, studentName, numSubgroup);
+	db->getGroupPtr(groupId)->getStudentPtr(studentName)->setSubgroupId(numSubgroup);
 }
 
-void TeachRegManager::addStudentName(const QString &studentName, const QString &groupName)
+void TeachRegManager::addStudentName(const QString &studentName, int groupId)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	dbManager->addStudent(studentName, groupId);
+	Student st;
+	st.setName(studentName);
+	st.setSubgroupId(1);
+	
+	Group *gr = db->getGroupPtr(groupId);
+	st.setParent(gr);
+	gr->addStudent(st);
 }
 
-void TeachRegManager::editStudentName(const QString &groupName, const QString &oldStudentName, const QString &newStudentName)
+void TeachRegManager::editStudentName(int groupId, const QString &oldStudentName, const QString &newStudentName)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	dbManager->editStudent(groupId, oldStudentName, newStudentName);
+	db->getGroupPtr(groupId)->getStudentPtr(oldStudentName)->setName(newStudentName);
 }
 
 void TeachRegManager::delStudent(const QString &studentName)
@@ -137,83 +204,83 @@ void TeachRegManager::delStudent(const QString &studentName)
 	// TODO
 }
 
-QStringList TeachRegManager::getLecturesDateList(const QString &groupName, const QString &disciplinName) const
+void TeachRegManager::addLecture(int groupId, int disciplinId, const QString &date)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	return dbManager->getLectureDates(groupId, disciplinId);
+	Group *gr = db->getGroupPtr(groupId);
+	gr->addLectureDate(disciplinId, date);
+	for(int i = 0; i < gr->count(); i++)
+		gr->getStudentPtr(i)->addLectureResult(disciplinId, "0");
 }
 
-QStringList TeachRegManager::getPracticsDateList(const QString &groupName, const QString &disciplinName, quint32 numSubgroup) const
+void TeachRegManager::addPractic(int groupId, int disciplinId, quint32 numSubgroup, const QString &date)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	return dbManager->getPracticDates(groupId, disciplinId, numSubgroup);
+	Group *gr = db->getGroupPtr(groupId);
+	gr->addPracticDate(disciplinId * 10 + numSubgroup, date);
+	for(int i = 0; i < gr->count(); i++)
+	{
+		if(gr->getStudentPtr(i)->getSubgroupId() == numSubgroup)
+			gr->getStudentPtr(i)->addPracticResult(disciplinId, "0");
+	}
 }
 
-void TeachRegManager::addLecture(const QString &groupName, const QString &disciplinName, const QString &date)
+QStringList TeachRegManager::getGroupData(int groupId) const
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	dbManager->addLectureDate(groupId, disciplinId, date);
+	QStringList ret;
+	Group gr = db->getGroup(groupId);
+	ret << gr.getName() << QString().setNum(gr.count()) << QString().setNum(gr.getNumSubgroups());
+	return ret;
 }
 
-void TeachRegManager::addPractic(const QString &groupName, const QString &disciplinName, quint32 numSubgroup, const QString &date)
+QList< float > TeachRegManager::getLectureTotals(int groupId, int disciplinId) const
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	dbManager->addPracticDate(groupId, disciplinId, numSubgroup, date);
+	return db->getGroup(groupId).getLectureTotals(disciplinId);
 }
 
-QStringList TeachRegManager::getLecturesResultList(const QString &groupName, const QString &disciplinNam, const QString &studentName) const
+QList< float > TeachRegManager::getPracticTotals(int groupId, int disciplinId, int subgroupId) const
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	return dbManager->getLectureResults(groupId, disciplinId, studentName);
+	return db->getGroup(groupId).getPracticTotals(disciplinId, subgroupId);
 }
 
-QStringList TeachRegManager::getPracticsResultList(const QString &groupName, const QString &disciplinNam, quint32 numSubgroup, const QString &studentName) const
+void TeachRegManager::setDisciplinView(QComboBox *dcb)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	return dbManager->getPracticResults(groupId, disciplinId, studentName);
+	QStringList disciplinList = db->getDisciplinList();
+	for(int i = 0; i < disciplinList.count(); i++)
+		dcb->addItem(disciplinList.at(i), i);
 }
 
-void TeachRegManager::addLectureResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result)
+void TeachRegManager::setGroupView(QComboBox *gcb)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	dbManager->editLectureResults(groupId, disciplinId, pos, studentName, result);
+	QStringList groupList = getGroupsNamesList();
+	for(int i = 0; i < groupList.count(); i++)
+		gcb->addItem(groupList.at(i), i);
 }
 
-void TeachRegManager::addPracticResult(const QString &groupName, const QString &disciplinNam, const QString &studentName, int pos, const QString &result)
+void TeachRegManager::setSubgroupView(QComboBox *scb, int groupId)
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinNam);
-	dbManager->editPracticResults(groupId, disciplinId, pos, studentName, result);
+	int n = db->getGroupPtr(groupId)->getNumSubgroups();
+	for(int i = 0; i < n; i++)
+	{
+		scb->addItem(QString().setNum(i + 1), i + 1);
+	}
 }
 
-QStringList TeachRegManager::getGroupData(const QString &groupName) const
+DataBaseTeachReg *TeachRegManager::getDb()
 {
-	int groupId = dbManager->getGroupIdByName(groupName);
-	return dbManager->getGroupData(groupId);
+	return db;
 }
 
-bool TeachRegManager::saveDB()
+bool TeachRegManager::saveDb()
 {
-	dbManager->saveDb();
-}
-
-QList< float > TeachRegManager::getLectureTotals(const QString &groupName, const QString &disciplinName) const
-{
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	return dbManager->getLectureTotals(groupId, disciplinId);
-}
-
-QList< float > TeachRegManager::getPracticTotals(const QString &groupName, const QString &disciplinName, int subgroupId) const
-{
-	int groupId = dbManager->getGroupIdByName(groupName);
-	int disciplinId = dbManager->getDisciplinIdByName(disciplinName);
-	return dbManager->getPracticTotals(groupId, disciplinId, subgroupId);
+	QFile file(dbFilePath);
+	
+	if(!file.open(QIODevice::WriteOnly))
+	{
+		qDebug() << "ERROR: Cannot open file" << dbFilePath << " for writing: " << file.errorString();
+		return false;
+	}
+	
+	QDataStream out(&file);
+	out << quint32(magicNumber) << quint16(out.version());
+	out << *db;
+	return true;
 }
