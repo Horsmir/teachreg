@@ -867,6 +867,7 @@
     <property name="title">
      <string>&amp;Вид</string>
     </property>
+    <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -995,6 +996,17 @@
    </property>
    <property name="toolTip">
     <string>О Qt</string>
+   </property>
+  </action>
+  <action name="actionOptions">
+   <property name="text">
+    <string>Параметры...</string>
+   </property>
+   <property name="toolTip">
+    <string>Параметры настройки вида</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+N</string>
    </property>
   </action>
  </widget>

@@ -94,6 +94,22 @@ QVariant TeachModel::data(const QModelIndex &index, int role) const
 	{
 		return index.row();
 	}
+	else if(role == Qt::ForegroundRole)
+	{
+		QBrush brush;
+		if(index.column() == 0)
+			brush.setColor(color0);
+		else
+			brush.setColor(color1);
+		return brush;
+	}
+	else if(role == Qt::FontRole)
+	{
+		if(index.column() == 0)
+			return font0;
+		else
+			return font1;
+	}
 	return QVariant();
 }
 
@@ -132,6 +148,11 @@ bool TeachModel::setData(const QModelIndex &index, const QVariant &value, int ro
 	return false;
 }
 
+bool caseInsensitiveLessThan(Student *st1, Student *st2)
+{
+	return st1->getName().toLower() < st2->getName().toLower();
+}
+
 void TeachModel::createStudentsList()
 {
 	studentsList.clear();
@@ -144,6 +165,17 @@ void TeachModel::createStudentsList()
 		else if(st->getSubgroupId() == subgroupId)
 			studentsList << st;
 	}
+	qSort(studentsList.begin(), studentsList.end(), caseInsensitiveLessThan);
 }
+
+void TeachModel::setDecor(const QFont &f0, const QFont &f1, const QColor c0, const QColor c1)
+{
+	font0 = f0;
+	font1 = f1;
+	color0 = c0;
+	color1 = c1;
+	reset();
+}
+
 
 #include "teachmodel.moc"

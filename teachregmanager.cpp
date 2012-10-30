@@ -19,7 +19,7 @@
 
 #include "teachregmanager.h"
 
-TeachRegManager::TeachRegManager(QObject *parent): QObject(parent)
+TeachRegManager::TeachRegManager(QObject *parent): QObject(parent), db(0)
 {
 	dbFilePath = "default.dbtr";
 	magicNumber = 0xAAFF452D;
@@ -180,17 +180,74 @@ void TeachRegManager::delGroup(int groupId)
 
 void TeachRegManager::changeSubgroup(int groupId, quint32 numSubgroup, const QString &studentName)
 {
-	db->getGroupPtr(groupId)->getStudentPtr(studentName)->setSubgroupId(numSubgroup);
+	Group *gr = db->getGroupPtr(groupId);
+	Student *st = gr->getStudentPtr(studentName);
+	int oldSubgroup = st->getSubgroupId();
+	int j = 0;
+	if(oldSubgroup == numSubgroup)
+		return;
+	
+	QMap<int, QStringList> prMap;
+	for(int i = 0; i < db->getDisciplinList().count(); i++)
+	{
+		int oldPracticDatesCount = gr->getPracticDate(i * 10 + oldSubgroup).count();
+		int practicDatesCount = gr->getPracticDate(i * 10 + numSubgroup).count();
+		QStringList prac;
+		if(practicDatesCount <= oldPracticDatesCount)
+		{
+			for(j = 0; i < practicDatesCount; i++)
+			{
+				prac << st->getPracticResults(i).at(j);
+			}
+		}
+		else
+		{
+			for(j = 0; j < oldPracticDatesCount; j++)
+			{
+				prac << st->getPracticResults(i).at(j);
+			}
+			for(j; j < practicDatesCount; j++)
+			{
+				prac << "0";
+			}
+		}
+		prMap.insert(i, prac);
+	}
+	
+	st->setSubgroupId(numSubgroup);
+	st->setPracticResultsMap(prMap);
 }
 
 void TeachRegManager::addStudentName(const QString &studentName, int groupId)
 {
+	QMap<int, QStringList> lrMap;
+	QMap<int, QStringList> prMap;
+	int lectureDatesCount = 0, practicDatesCount = 0;
+	
 	Student st;
 	st.setName(studentName);
 	st.setSubgroupId(1);
 	
 	Group *gr = db->getGroupPtr(groupId);
 	st.setParent(gr);
+	
+	for(int i = 0; i < db->getDisciplinList().count(); i++)
+	{
+		lectureDatesCount = gr->getLectureDate(i).count();
+		practicDatesCount = gr->getPracticDate(i * 10 + 1).count();
+		QStringList lect;
+		QStringList prac;
+		for(int j = 0; j < lectureDatesCount; j++)
+			lect << "0";
+		for(int j = 0; j < practicDatesCount; j++)
+			prac << "0";
+		
+		lrMap.insert(i, lect);
+		prMap.insert(i, prac);
+	}
+	
+	st.setLectureResultsMap(lrMap);
+	st.setPracticResultsMap(prMap);
 	gr->addStudent(st);
 }
 

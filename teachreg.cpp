@@ -10,6 +10,7 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	dlgStudents = new StudentListDialog(this);
 	dlgCreateDb = new CreateDbDialog(this);
 	dlgAddDate = new AddDateDialog(this);
+	dlgOptions = new OptionsDialog(this);
 	
 	manager = new TeachRegManager(this);
 	
@@ -33,6 +34,25 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	}
 	
 	createIcons();
+	if(!dbFileName.isEmpty())
+	{
+		if(manager->getGroupsNamesList().isEmpty() || manager->getDisciplinsList().isEmpty())
+		{
+			for(int i = 3; i <= 5; i++)
+			{
+				Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+				ui->contentsWidget->item(i)->setFlags(flags ^ Qt::ItemIsEnabled);
+			}
+		}
+	}
+	else
+	{
+		for(int i = 1; i <= 5; i++)
+		{
+			Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+			ui->contentsWidget->item(i)->setFlags(flags ^ Qt::ItemIsEnabled);
+		}
+	}
 	ui->subgroupResultComboBox->setVisible(false);
 	ui->label_20->setVisible(false);
 	
@@ -41,13 +61,14 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	
 	htmlGenerator = new HtmlGenerator(this);
 	
-	ui->contentsWidget->setCurrentRow(currentPageIndex);
-	ui->pagesWidget->setCurrentIndex(currentPageIndex);
-	
 	lecPracModel = new TeachModel(this);
 	lecPracModel->setTeachDb(manager->getDb());
+	lecPracModel->setDecor(font0, font1, color0, color1);
 	ui->lectureViewWidget->setModel(lecPracModel);
 	ui->practicViewWidget->setModel(lecPracModel);
+	
+	ui->contentsWidget->setCurrentRow(currentPageIndex);
+	ui->pagesWidget->setCurrentIndex(currentPageIndex);
 }
 
 TeachReg::~TeachReg()
@@ -147,6 +168,12 @@ void TeachReg::on_createDbButton_clicked()
 		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
 		ui->label_14->setVisible(false);
 		setWindowTitle("TeachReg - " + dbFileName);
+		lecPracModel->setTeachDb(manager->getDb());
+	}
+	for(int i = 1; i <= 2; i++)
+	{
+		Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+		ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
 	}
 }
 
@@ -156,6 +183,10 @@ void TeachReg::writeSettings()
 	settings->setValue("general/CurrentDBDateDir", dbDateDir);
 	settings->setValue("general/docDir", docDir);
 	settings->setValue("view/LastPage", ui->pagesWidget->currentIndex());
+	settings->setValue("view/Font0", font0);
+	settings->setValue("view/Font1", font1);
+	settings->setValue("view/Color0", color0);
+	settings->setValue("view/Color1", color1);
 }
 
 void TeachReg::readSettings()
@@ -164,6 +195,10 @@ void TeachReg::readSettings()
 	dbDateDir = settings->value("general/CurrentDBDateDir", QDir::homePath()).toString();
 	docDir = settings->value("general/docDir", QApplication::applicationDirPath() + "/../doc").toString();
 	currentPageIndex = settings->value("view/LastPage", 0).toInt();
+	font0 = settings->value("view/Font0", font()).value<QFont>();
+	font1 = settings->value("view/Font1", font()).value<QFont>();
+	color0 = settings->value("view/Color0", palette().text().color()).value<QColor>();
+	color1 = settings->value("view/Color1", palette().text().color()).value<QColor>();
 }
 
 void TeachReg::on_selectDbFilePathButton_clicked()
@@ -182,6 +217,28 @@ void TeachReg::on_selectDbFilePathButton_clicked()
 		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
 		ui->label_14->setVisible(false);
 		setWindowTitle("TeachReg - " + dbFileName);
+		lecPracModel->setTeachDb(manager->getDb());
+		for(int i = 1; i <= 2; i++)
+		{
+			Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+			ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
+		}
+		if(!manager->getGroupsNamesList().isEmpty() && !manager->getDisciplinsList().isEmpty())
+		{
+			for(int i = 3; i <= 5; i++)
+			{
+				Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+				ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
+			}
+		}
+		else
+		{
+			for(int i = 3; i <= 5; i++)
+			{
+				Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+				ui->contentsWidget->item(i)->setFlags(flags ^ Qt::ItemIsEnabled);
+			}
+		}
 	}
 }
 
@@ -203,6 +260,14 @@ void TeachReg::on_addDisciplinButton_clicked()
 	{
 		manager->addDisciplin(text);
 		showDisciplinList();
+		if(!manager->getGroupsNamesList().isEmpty())
+		{
+			for(int i = 3; i <= 5; i++)
+			{
+				Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+				ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
+			}
+		}
 	}
 }
 
@@ -249,6 +314,14 @@ void TeachReg::on_addGroupButton_clicked()
 	{
 		manager->addGroup(text);
 		showGroupslinList();
+		if(!manager->getDisciplinsList().isEmpty())
+		{
+			for(int i = 3; i <= 5; i++)
+			{
+				Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+				ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
+			}
+		}
 	}
 }
 
@@ -510,6 +583,22 @@ void TeachReg::setSubgroupsListTotals()
 void TeachReg::on_actionHelp_triggered()
 {
 	HelpBrowser::showPage(docDir, "1.html");
+}
+
+void TeachReg::on_actionOptions_triggered()
+{
+	dlgOptions->setColor0(color0);
+	dlgOptions->setColor1(color1);
+	dlgOptions->setFont0(font0);
+	dlgOptions->setFont1(font1);
+	if(dlgOptions->exec() == QDialog::Accepted)
+	{
+		color0 = dlgOptions->getColor0();
+		color1 = dlgOptions->getColor1();
+		font0 = dlgOptions->getFont0();
+		font1 = dlgOptions->getFont1();
+		lecPracModel->setDecor(font0, font1, color0, color1);
+	}
 }
 
 #include "teachreg.moc"

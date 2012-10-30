@@ -15,6 +15,7 @@
 #include "dbase/htmlgenerator.h"
 #include "help_browser/helpbrowser.h"
 #include "teachmodel.h"
+#include "optionsdialog.h"
 
 namespace Ui
 {
@@ -65,6 +66,7 @@ private slots:
 	void on_disciplinResultComboBox_activated(int index);
 	void on_groupResultComboBox_activated(int index);
 	void on_actionHelp_triggered();
+	void on_actionOptions_triggered();
 	
 private:
 	Ui::MainWindow *ui;
@@ -81,6 +83,11 @@ private:
 	int currentPageIndex;
 	QString docDir;
 	TeachModel *lecPracModel;
+	OptionsDialog *dlgOptions;
+	QFont font0;				// шрифт списка студентов
+	QFont font1;				// шрифт баллов
+	QColor color0;				// цвет текста списка студентов
+	QColor color1;				// цвет текста баллов
 	
 	void createIcons();
 	void writeSettings();

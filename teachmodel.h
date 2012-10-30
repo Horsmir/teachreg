@@ -21,6 +21,8 @@
 #define TEACHMODEL_H
 
 #include <QtCore/QAbstractTableModel>
+#include <QtGui/QBrush>
+#include <QtGui/QFont>
 #include "dbase/databaseteachreg.h"
 
 class TeachModel : public QAbstractTableModel
@@ -31,6 +33,7 @@ public:
 	
 	void setTeachDb(DataBaseTeachReg *db);
 	void setDataForQuest(const quint32 disciplinId, const quint32 groupId, const quint32 subgroupId = 0);
+	void setDecor(const QFont &f0, const QFont &f1, const QColor c0, const QColor c1);
 	
 	int rowCount(const QModelIndex &parent) const;
 	int columnCount(const QModelIndex &parent) const;
@@ -48,6 +51,12 @@ private:
 	quint32 subgroupId;
 	QStringList ocenkList;
 	QList<Student*> studentsList;
+	QFont font0;
+	QFont font1;
+	QColor color0;
+	QColor color1;
+	
+	//bool caseInsensitiveLessThan(Student *st1, Student *st2);
 };
 
 #endif // TEACHMODEL_H
