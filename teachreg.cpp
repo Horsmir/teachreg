@@ -187,6 +187,7 @@ void TeachReg::writeSettings()
 	settings->setValue("view/Font1", font1);
 	settings->setValue("view/Color0", color0);
 	settings->setValue("view/Color1", color1);
+	settings->setValue("view/Geometry", saveGeometry());
 }
 
 void TeachReg::readSettings()
@@ -199,6 +200,7 @@ void TeachReg::readSettings()
 	font1 = settings->value("view/Font1", font()).value<QFont>();
 	color0 = settings->value("view/Color0", palette().text().color()).value<QColor>();
 	color1 = settings->value("view/Color1", palette().text().color()).value<QColor>();
+	restoreGeometry(settings->value("view/Geometry", saveGeometry()).toByteArray());
 }
 
 void TeachReg::on_selectDbFilePathButton_clicked()
