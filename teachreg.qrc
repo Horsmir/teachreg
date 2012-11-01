@@ -1,6 +1,13 @@
 <RCC>
   <qresource prefix="/">
-    <file>images/icon.png</file>
+    <file>icons/application-exit.png</file>
+    <file>icons/configure.png</file>
+    <file>icons/document-new.png</file>
+    <file>icons/document-open.png</file>
+    <file>icons/document-save.png</file>
+    <file>icons/help-about.png</file>
+    <file>icons/help-contents.png</file>
+    <file>images/teacreg.png</file>
     <file>images/results.png</file>
     <file>images/practics.png</file>
     <file>images/lectures.png</file>

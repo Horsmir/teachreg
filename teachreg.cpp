@@ -24,7 +24,7 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 			ui->dbFilePathEdit->setText(dbFileName);
 			ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
 			ui->label_14->setVisible(false);
-			setWindowTitle("TeachReg - " + dbFileName);
+			setWindowTitle(appName + " - " + dbFileName);
 		}
 		else
 		{
@@ -141,9 +141,11 @@ void TeachReg::on_contentsWidget_currentItemChanged(QListWidgetItem *current, QL
 			on_practicGroupComboBox_activated(0);
 			break;
 		case 5:
-			ui->groupResultComboBox->addItems(manager->getGroupsNamesList());
+			ui->groupResultComboBox->clear();
+			ui->disciplinResultComboBox->clear();
+			manager->setDisciplinView(ui->disciplinResultComboBox);
+			manager->setGroupView(ui->groupResultComboBox);
 			ui->groupResultComboBox->setCurrentIndex(0);
-			ui->disciplinResultComboBox->addItems(manager->getDisciplinsList());
 			ui->disciplinResultComboBox->setCurrentIndex(0);
 			break;
 		default:
@@ -167,7 +169,7 @@ void TeachReg::on_createDbButton_clicked()
 		ui->dbFilePathEdit->setText(dbFileName);
 		ui->aboutDbTextEdit->setPlainText(manager->getAboutDB());
 		ui->label_14->setVisible(false);
-		setWindowTitle("TeachReg - " + dbFileName);
+		setWindowTitle(appName + " - " + dbFileName);
 		lecPracModel->setTeachDb(manager->getDb());
 	}
 	for(int i = 1; i <= 2; i++)
@@ -179,6 +181,7 @@ void TeachReg::on_createDbButton_clicked()
 
 void TeachReg::writeSettings()
 {
+	settings->setValue("general/ApplicationName", appName);
 	settings->setValue("general/CurrentDBFilePath", dbFileName);
 	settings->setValue("general/CurrentDBDateDir", dbDateDir);
 	settings->setValue("general/docDir", docDir);
@@ -192,6 +195,7 @@ void TeachReg::writeSettings()
 
 void TeachReg::readSettings()
 {
+	appName = settings->value("general/ApplicationName", "TeachReg").toString();
 	dbFileName = settings->value("general/CurrentDBFilePath", QString()).toString();
 	dbDateDir = settings->value("general/CurrentDBDateDir", QDir::homePath()).toString();
 	docDir = settings->value("general/docDir", QApplication::applicationDirPath() + "/../doc").toString();
@@ -584,7 +588,7 @@ void TeachReg::setSubgroupsListTotals()
 
 void TeachReg::on_actionHelp_triggered()
 {
-	HelpBrowser::showPage(docDir, "1.html");
+	HelpBrowser::showPage(docDir, "index.html");
 }
 
 void TeachReg::on_actionOptions_triggered()
@@ -601,6 +605,18 @@ void TeachReg::on_actionOptions_triggered()
 		font1 = dlgOptions->getFont1();
 		lecPracModel->setDecor(font0, font1, color0, color1);
 	}
+}
+
+void TeachReg::on_actionAbout_triggered()
+{
+	QString str1, str2, str3, str4;
+	
+	str1 = trUtf8("<h2>%1 %2</h2><p><b>%1</b> - предназначена для учёта успеваемости студентов на теоритических и практических занятиях по различным дисциплинам, а также вычисления и вывода итоговых результатов.</p><p>Copyright &copy;  2012 Роман Браун</p>").arg(appName).arg(VERSION);
+	str2 = trUtf8("<p>Это программа является свободным программным обеспечением. Вы можете распространять и/или модифицировать её согласно условиям Стандартной Общественной Лицензии GNU, опубликованной Фондом Свободного Программного Обеспечения, версии 3 или, по Вашему желанию, любой более поздней версии.</p>");
+	str3 = trUtf8("<p>Эта программа распространяется в надежде, что она будет полезной, но БЕЗ ВСЯКИХ ГАРАНТИЙ, в том числе подразумеваемых гарантий ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ и ГОДНОСТИ ДЛЯ ОПРЕДЕЛЁННОГО ПРИМЕНЕНИЯ. Смотрите Стандартную Общественную Лицензию GNU для получения дополнительной информации.</p>");
+	str4 = trUtf8("<p>Вы должны были получить копию Стандартной Общественной Лицензии GNU вместе с программой. В случае её отсутствия, посмотрите <a href=\"http://www.gnu.org/licenses/\">http://www.gnu.org/licenses/</a>.</p><p>E-Mail: <a href=\"mailto:firdragon76@gmail.com\">firdragon76@gmail.com</a><br>Сайт программы: <a href=\"github.com/Horsmir/teachreg\">github.com/Horsmir/teachreg</a></p>");
+	
+	QMessageBox::about(this, trUtf8("О программе"), str1 + str2 + str3 + str4);
 }
 
 #include "teachreg.moc"

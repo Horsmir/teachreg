@@ -16,6 +16,7 @@
 #include "help_browser/helpbrowser.h"
 #include "teachmodel.h"
 #include "optionsdialog.h"
+#include "teachregconfigure.h"
 
 namespace Ui
 {
@@ -67,6 +68,7 @@ private slots:
 	void on_groupResultComboBox_activated(int index);
 	void on_actionHelp_triggered();
 	void on_actionOptions_triggered();
+	void on_actionAbout_triggered();
 	
 private:
 	Ui::MainWindow *ui;
@@ -88,6 +90,7 @@ private:
 	QFont font1;				// шрифт баллов
 	QColor color0;				// цвет текста списка студентов
 	QColor color1;				// цвет текста баллов
+	QString appName;			// название приложения
 	
 	void createIcons();
 	void writeSettings();
