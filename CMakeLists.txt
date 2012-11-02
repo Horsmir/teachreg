@@ -52,6 +52,11 @@ target_link_libraries(teachreg ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
 
 add_subdirectory(help_browser)
 
+install(TARGETS teachreg RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+install(FILES teachreg.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+install(FILES icons/teachreg.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pixmaps)
+install(DIRECTORY doc/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/teachreg PATTERN "*~" EXCLUDE)
+
 ########## Add make dist target ################
 set(CPACK_PACKAGE_VERSION "${TEACHREG_VERSION}")
 set(CPACK_SOURCE_GENERATOR "TBZ2")

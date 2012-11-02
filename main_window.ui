@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="teachreg.qrc">
-    <normaloff>:/images/teacreg.png</normaloff>:/images/teacreg.png</iconset>
+    <normaloff>:/icons/teachreg.png</normaloff>:/icons/teachreg.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -58,7 +58,7 @@
        <enum>QListView::TopToBottom</enum>
       </property>
       <property name="resizeMode">
-       <enum>QListView::Fixed</enum>
+       <enum>QListView::Adjust</enum>
       </property>
       <property name="layoutMode">
        <enum>QListView::SinglePass</enum>

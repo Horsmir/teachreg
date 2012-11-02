@@ -14,7 +14,7 @@ TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 	
 	manager = new TeachRegManager(this);
 	
-	settings = new QSettings("../config/teahreg.conf", QSettings::NativeFormat, this);
+	settings = new QSettings( QSettings::NativeFormat, QSettings::UserScope, "TeachReg", QString(), this);
 	readSettings();
 	
 	if(!dbFileName.isEmpty())
