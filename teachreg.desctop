@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=TeachReg
-Name[ru]=TeachReg
-Exec=teachreg
-Type=Application
-Icon=teachreg.png
-GenericName=Electronic gradebook
-GenericName[ru]=Электронный журнал успеваемости
-Categories=Qt;Education;

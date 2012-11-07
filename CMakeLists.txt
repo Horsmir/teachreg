@@ -61,7 +61,7 @@ install(DIRECTORY doc/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/teachreg PA
 set(CPACK_PACKAGE_VERSION "${TEACHREG_VERSION}")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "teachreg-${TEACHREG_VERSION}")
-set(CPACK_IGNORE_FILES "/CVS/;/\\\\.git\;/\\\\.svn/;\\\\.swp$;\\\\.#;/#;\\\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;build/;dist/;exp/;.*~")
+set(CPACK_IGNORE_FILES "/CVS/;/\\\\.git\;/\\\\.svn/;\\\\.swp$;\\\\.#;/#;\\\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;build/;dist/;exp/;config/;data/;.*~")
 set(CPACK_SOURCE_IGNORE_FILES ${CPACK_IGNORE_FILES})
 include(CPack)
 # simulate autotools' "make dist"
