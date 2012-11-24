@@ -1,3 +1,5 @@
+#include <QtGui/QPrinter>
+#include <QtGui/QPrintDialog>
 #include "teachreg.h"
 
 TeachReg::TeachReg(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
@@ -171,11 +173,12 @@ void TeachReg::on_createDbButton_clicked()
 		ui->label_14->setVisible(false);
 		setWindowTitle(appName + " - " + dbFileName);
 		lecPracModel->setTeachDb(manager->getDb());
-	}
-	for(int i = 1; i <= 2; i++)
-	{
-		Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
-		ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
+		
+		for(int i = 1; i <= 2; i++)
+		{
+			Qt::ItemFlags flags =  ui->contentsWidget->item(i)->flags();
+			ui->contentsWidget->item(i)->setFlags(flags | Qt::ItemIsEnabled);
+		}
 	}
 }
 
@@ -617,6 +620,16 @@ void TeachReg::on_actionAbout_triggered()
 	str4 = trUtf8("<p>Вы должны были получить копию Стандартной Общественной Лицензии GNU вместе с программой. В случае её отсутствия, посмотрите <a href=\"http://www.gnu.org/licenses/\">http://www.gnu.org/licenses/</a>.</p><p>E-Mail: <a href=\"mailto:firdragon76@gmail.com\">firdragon76@gmail.com</a><br>Сайт программы: <a href=\"github.com/Horsmir/teachreg\">github.com/Horsmir/teachreg</a></p>");
 	
 	QMessageBox::about(this, trUtf8("О программе"), str1 + str2 + str3 + str4);
+}
+
+void TeachReg::on_printResultButton_clicked()
+{
+	QPrinter *printer = new QPrinter;
+	QPrintDialog *printDialog = new QPrintDialog(printer, this);
+	if(printDialog->exec() == QDialog::Accepted)
+	{
+		ui->resultTextEdit->print(printer);
+	}
 }
 
 #include "teachreg.moc"

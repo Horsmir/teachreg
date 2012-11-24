@@ -69,6 +69,7 @@ private slots:
 	void on_actionHelp_triggered();
 	void on_actionOptions_triggered();
 	void on_actionAbout_triggered();
+	void on_printResultButton_clicked();
 	
 private:
 	Ui::MainWindow *ui;
