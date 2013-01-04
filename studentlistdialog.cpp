@@ -109,7 +109,7 @@ void StudentListDialog::on_delStudentButton_clicked()
 	reply = QMessageBox::question(this, trUtf8("Удаление студента"), QString(trUtf8("Удалить студента \"") + curStudentName + "\"?"), QMessageBox::Yes | QMessageBox::No);
 	if (reply == QMessageBox::Yes)
 	{
-		manager->delStudent(curStudentName);
+		manager->delStudent(groupId, curStudentName);
 		setStudentList();
 	}
 }

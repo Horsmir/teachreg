@@ -2,6 +2,11 @@ project(teachreg)
 cmake_minimum_required(VERSION 2.6)
 find_package(Qt4 REQUIRED)
 
+if(CMAKE_CROSSCOMPILING)
+  set(QT_HEADERS_DIR "/usr/i486-mingw32/include")
+  set(QT_LIBRARY_DIR "/usr/i486-mingw32/lib")
+endif(CMAKE_CROSSCOMPILING)
+
 if (NOT CMAKE_BUILD_TYPE)
     set ( CMAKE_BUILD_TYPE Release )
 endif (NOT CMAKE_BUILD_TYPE)
@@ -47,7 +52,7 @@ qt4_automoc(${teachreg_SRCS})
 QT4_WRAP_UI(UI_HEADERS ${teachreg_UIS})
 QT4_ADD_RESOURCES(QRC_SOURCES ${teachreg_QRCS})
 
-add_executable(teachreg ${teachreg_SRCS} ${UI_HEADERS} ${QRC_SOURCES})
+add_executable(teachreg WIN32 ${teachreg_SRCS} ${UI_HEADERS} ${QRC_SOURCES})
 target_link_libraries(teachreg ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
 
 add_subdirectory(help_browser)
@@ -61,7 +66,7 @@ install(DIRECTORY doc/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/teachreg PA
 set(CPACK_PACKAGE_VERSION "${TEACHREG_VERSION}")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "teachreg-${TEACHREG_VERSION}")
-set(CPACK_IGNORE_FILES "/CVS/;/\\\\.git\;/\\\\.svn/;\\\\.swp$;\\\\.#;/#;\\\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;build/;dist/;exp/;config/;data/;.*~")
+set(CPACK_IGNORE_FILES "/CVS/;/\\\\.git\;/\\\\.svn/;\\\\.swp$;\\\\.#;/#;\\\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;build/;dist/;exp/;config/;data/;build-win32/;.*~;exp-win32/;install-win32/")
 set(CPACK_SOURCE_IGNORE_FILES ${CPACK_IGNORE_FILES})
 include(CPack)
 # simulate autotools' "make dist"

@@ -256,9 +256,10 @@ void TeachRegManager::editStudentName(int groupId, const QString &oldStudentName
 	db->getGroupPtr(groupId)->getStudentPtr(oldStudentName)->setName(newStudentName);
 }
 
-void TeachRegManager::delStudent(const QString &studentName)
+void TeachRegManager::delStudent(int groupId, const QString &studentName)
 {
-	// TODO
+	int sid = db->getGroup(groupId).getStudentIdByName(studentName);
+	db->delStudent(groupId, sid);
 }
 
 void TeachRegManager::addLecture(int groupId, int disciplinId, const QString &date)

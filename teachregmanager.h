@@ -54,7 +54,7 @@ public:
 	void changeSubgroup(int groupId, quint32 numSubgroup, const QString &studentName);
 	void addStudentName(const QString &studentName, int groupId);
 	void editStudentName(int groupId, const QString &oldStudentName, const QString &newStudentName);
-	void delStudent(const QString &studentName);
+	void delStudent(int groupId, const QString &studentName);
 	
 	void addLecture(int groupId, int disciplinId, const QString &date);
 	void addPractic(int groupId, int disciplinId, quint32 numSubgroup, const QString &date);

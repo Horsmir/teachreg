@@ -201,7 +201,12 @@ void TeachReg::readSettings()
 	appName = settings->value("general/ApplicationName", "TeachReg").toString();
 	dbFileName = settings->value("general/CurrentDBFilePath", QString()).toString();
 	dbDateDir = settings->value("general/CurrentDBDateDir", QDir::homePath()).toString();
-	docDir = settings->value("general/docDir", QApplication::applicationDirPath() + "/../doc").toString();
+#ifdef Q_OS_WIN32
+	docDir = settings->value("general/docDir", QApplication::applicationDirPath() + "/doc").toString();
+#endif
+#ifdef Q_OS_LINUX
+	docDir = settings->value("general/docDir", QApplication::applicationDirPath() + "../share/doc/teachreg").toString();
+#endif
 	currentPageIndex = settings->value("view/LastPage", 0).toInt();
 	font0 = settings->value("view/Font0", font()).value<QFont>();
 	font1 = settings->value("view/Font1", font()).value<QFont>();
@@ -498,8 +503,14 @@ void TeachReg::on_actionOpen_triggered()
 
 QString TeachReg::roundResult(float num, int pers)
 {
+#ifdef Q_OS_WIN32
+	float ret = round(num * std::pow(10, pers));
+	QString tmp = QString().setNum(ret / std::pow(10, pers), 'f', pers);
+#endif
+#ifdef Q_OS_LINUX
 	float ret = round(num * pow10(pers));
 	QString tmp = QString().setNum(ret / pow10(pers), 'f', pers);
+#endif
 	return tmp;
 }
 

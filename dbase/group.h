@@ -71,6 +71,8 @@ public:
 	
 	Group &operator=(const Group &group);
 	
+	void delStudent(int studentId);
+	
 private:
 	QString name;
 	int numSubgroups;

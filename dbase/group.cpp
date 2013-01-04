@@ -228,6 +228,11 @@ int Group::countInSubgroup(int subgroupId) const
 	return stl;
 }
 
+void Group::delStudent(int studentId)
+{
+	studentList.removeAt(studentId);
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 
 QDataStream &operator<<(QDataStream &out, const Group &gr)

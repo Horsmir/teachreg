@@ -230,7 +230,7 @@ void DataBaseTeachReg::delGroup(int groupId)
 
 void DataBaseTeachReg::delStudent(int groupId, int studentId)
 {
-	//TODO
+	getGroupPtr(groupId)->delStudent(studentId);
 }
 
 //-----------------------------------------------------------------------------------
